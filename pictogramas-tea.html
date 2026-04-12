@@ -330,6 +330,45 @@
         .pictogram:hover .remove-btn { display: block; }
         .builder-board .pictogram .remove-btn { display: block; }
 
+        /* AI Elements */
+        .ai-generate-btn {
+            background-color: var(--primary-color);
+            color: white;
+            border: none;
+            border-radius: 10px;
+            padding: 8px;
+            font-size: 0.9rem;
+            font-weight: bold;
+            cursor: pointer;
+            margin-top: 10px;
+            text-align: center;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.2);
+            transition: transform 0.1s, background-color 0.2s;
+            width: 90%;
+        }
+        .ai-generate-btn:hover {
+            transform: scale(1.05);
+            background-color: var(--secondary-color);
+            color: black;
+        }
+        .ai-generate-btn:active {
+            transform: scale(0.95);
+        }
+
+        .loading-spinner {
+            font-size: 3rem;
+            animation: spin 2s linear infinite;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            height: 100px;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
         /* Library Area */
         .library-controls {
             display: flex;
@@ -709,6 +748,20 @@
                     <span id="rate-value">Normal</span>
                 </div>
 
+                <div class="setting-item" style="flex-direction: column; align-items: flex-start;">
+                    <label style="margin-bottom: 0.5rem; font-weight: bold; color: var(--primary-color);">🤖 Generación con IA (Open Router)</label>
+                    <div style="width: 100%; display: flex; flex-direction: column; gap: 0.5rem;">
+                        <input type="password" id="api-key-input" placeholder="Introduce tu API Key de Open Router" style="width: 100%; padding: 0.8rem; font-size: 1rem; border-radius: var(--border-radius); border: 2px solid #ccc;">
+                        <div style="display: flex; justify-content: space-between; align-items: center; width: 100%;">
+                            <label style="font-size: 1rem;">Activar IA automática (genera sin pulsar botón):</label>
+                            <label class="switch">
+                                <input type="checkbox" id="auto-ai-toggle">
+                                <span class="slider"></span>
+                            </label>
+                        </div>
+                    </div>
+                </div>
+
                 <button id="reset-data-btn" class="action-btn clear" style="margin-top: 30px;">⚠️ Borrar todos los datos guardados</button>
             </div>
         </section>
@@ -755,222 +808,296 @@
            1. DICCIONARIO DE PICTOGRAMAS (Más de 350 entradas con emojis/SVGs)
            ========================================================================= */
         const diccionario = [
-            // PERSONAS (Naranja)
-            { palabras: ["yo", "mi", "me"], img: "🧍", cat: "personas" },
-            { palabras: ["tu", "tú", "te"], img: "👉", cat: "personas" },
-            { palabras: ["el", "él", "ella"], img: "👤", cat: "personas" },
-            { palabras: ["nosotros", "nosotras"], img: "👥", cat: "personas" },
-            { palabras: ["mama", "mamá", "madre"], img: "👩", cat: "personas" },
-            { palabras: ["papa", "papá", "padre"], img: "👨", cat: "personas" },
-            { palabras: ["hermano", "hermana"], img: "👦", cat: "personas" },
-            { palabras: ["abuela", "abuelo"], img: "👵", cat: "personas" },
-            { palabras: ["bebe", "bebé"], img: "👶", cat: "personas" },
-            { palabras: ["amigo", "amiga", "amigos"], img: "🧑‍🤝‍🧑", cat: "personas" },
+
+            // PERSONAS Y PRONOMBRES (Naranja)
+            { palabras: ["yo", "mi", "me", "conmigo"], img: "🧍", cat: "personas" },
+            { palabras: ["tu", "tú", "te", "ti", "contigo"], img: "👉", cat: "personas" },
+            { palabras: ["el", "él", "ella", "le", "lo", "la"], img: "👤", cat: "personas" },
+            { palabras: ["nosotros", "nosotras", "nos"], img: "👥", cat: "personas" },
+            { palabras: ["vosotros", "vosotras", "ustedes", "os"], img: "👉👥", cat: "personas" },
+            { palabras: ["ellos", "ellas", "les", "los", "las"], img: "🗣️", cat: "personas" },
+            { palabras: ["mama", "mamá", "madre", "mami"], img: "👩", cat: "personas" },
+            { palabras: ["papa", "papá", "padre", "papi"], img: "👨", cat: "personas" },
+            { palabras: ["hermano", "hermana", "hermanos"], img: "👦", cat: "personas" },
+            { palabras: ["abuela", "abuelo", "abuelos"], img: "👵", cat: "personas" },
+            { palabras: ["bebe", "bebé", "nene", "nena"], img: "👶", cat: "personas" },
+            { palabras: ["amigo", "amiga", "amigos", "compañero"], img: "🧑‍🤝‍🧑", cat: "personas" },
             { palabras: ["profesor", "profesora", "maestro", "profe"], img: "👨‍🏫", cat: "personas" },
             { palabras: ["medico", "médico", "doctor", "doctora"], img: "👨‍⚕️", cat: "personas" },
             { palabras: ["policia", "policía"], img: "👮", cat: "personas" },
             { palabras: ["bombero"], img: "👨‍🚒", cat: "personas" },
-            { palabras: ["niño", "niña"], img: "🧒", cat: "personas" },
+            { palabras: ["niño", "niña", "niños", "chico", "chica"], img: "🧒", cat: "personas" },
+            { palabras: ["hombre", "señor"], img: "👨", cat: "personas" },
+            { palabras: ["mujer", "señora"], img: "👩", cat: "personas" },
+            { palabras: ["familia"], img: "👪", cat: "personas" },
 
-            // ACCIONES (Azul) - Verbos en infinitivo y conjugados
-            { palabras: ["querer", "quiero", "quiere", "queremos"], img: "👐", cat: "acciones" },
-            { palabras: ["tener", "tengo", "tiene", "tenemos"], img: "🤲", cat: "acciones" },
-            { palabras: ["ir", "voy", "vamos", "fue"], img: "🚶", cat: "acciones" },
-            { palabras: ["venir", "ven", "vengo"], img: "🏃", cat: "acciones" },
-            { palabras: ["estar", "estoy", "esta", "está"], img: "📍", cat: "acciones" },
-            { palabras: ["hacer", "hago", "hace"], img: "🛠️", cat: "acciones" },
-            { palabras: ["ver", "veo", "mirar", "miro"], img: "👁️", cat: "acciones" },
-            { palabras: ["escuchar", "escucho", "oir", "oigo"], img: "👂", cat: "acciones" },
-            { palabras: ["comer", "como", "come", "comiendo"], img: "🍽️", cat: "acciones" },
-            { palabras: ["beber", "bebo", "bebe", "tomar", "tomo"], img: "🚰", cat: "acciones" },
-            { palabras: ["dormir", "duermo", "duerme"], img: "💤", cat: "acciones" },
-            { palabras: ["jugar", "juego", "juega"], img: "🎮", cat: "acciones" },
-            { palabras: ["correr", "corro", "corre", "corriendo"], img: "🏃‍♂️", cat: "acciones" },
-            { palabras: ["saltar", "salto", "salta"], img: "🦘", cat: "acciones" },
-            { palabras: ["caminar", "camino", "andar", "pasear"], img: "🚶‍♂️", cat: "acciones" },
-            { palabras: ["hablar", "hablo", "decir", "digo"], img: "🗣️", cat: "acciones" },
-            { palabras: ["leer", "leo", "lee"], img: "📖", cat: "acciones" },
-            { palabras: ["escribir", "escribo", "escribe"], img: "✍️", cat: "acciones" },
-            { palabras: ["dibujar", "dibujo", "pintar", "pinto"], img: "🎨", cat: "acciones" },
-            { palabras: ["cantar", "canto", "canta"], img: "🎤", cat: "acciones" },
-            { palabras: ["bailar", "bailo", "baila"], img: "💃", cat: "acciones" },
-            { palabras: ["dar", "doy", "da", "dame"], img: "🎁", cat: "acciones" },
-            { palabras: ["tomar", "coger", "agarro"], img: "✊", cat: "acciones" },
-            { palabras: ["poner", "pongo", "pone"], img: "📥", cat: "acciones" },
-            { palabras: ["quitar", "quito", "quita", "sacar"], img: "📤", cat: "acciones" },
-            { palabras: ["abrir", "abro", "abre"], img: "👐", cat: "acciones" },
-            { palabras: ["cerrar", "cierro", "cierra"], img: "🚪", cat: "acciones" },
-            { palabras: ["entrar", "entro", "entra"], img: "🚶‍♂️➡️", cat: "acciones" },
-            { palabras: ["salir", "salgo", "sale"], img: "🚪🏃", cat: "acciones" },
-            { palabras: ["subir", "subo", "sube"], img: "⬆️", cat: "acciones" },
-            { palabras: ["bajar", "bajo", "baje"], img: "⬇️", cat: "acciones" },
-            { palabras: ["esperar", "espero", "espera"], img: "⏳", cat: "acciones" },
-            { palabras: ["parar", "paro", "para", "detener"], img: "🛑", cat: "acciones" },
-            { palabras: ["ayudar", "ayudo", "ayuda", "ayudame"], img: "🤝", cat: "acciones" },
-            { palabras: ["gustar", "gusta", "gusto", "agradar"], img: "👍", cat: "acciones" },
-            { palabras: ["pensar", "pienso", "piensa"], img: "💭", cat: "acciones" },
-            { palabras: ["saber", "se", "sé", "sabe"], img: "💡", cat: "acciones" },
-            { palabras: ["aprender", "aprendo", "aprende"], img: "🧠", cat: "acciones" },
-            { palabras: ["lavar", "lavo", "lava", "limpiar"], img: "🧼", cat: "acciones" },
-            { palabras: ["bañar", "baño", "duchar", "ducho"], img: "🛀", cat: "acciones" },
-            { palabras: ["vestir", "visto", "ropa", "ponerse"], img: "👕", cat: "acciones" },
-            { palabras: ["comprar", "compro", "compra"], img: "🛒", cat: "acciones" },
-            { palabras: ["pagar", "pago", "paga"], img: "💵", cat: "acciones" },
-            { palabras: ["llorar", "lloro", "llora"], img: "😢", cat: "acciones" },
-            { palabras: ["reir", "rio", "rie", "sonreir"], img: "😄", cat: "acciones" },
-            { palabras: ["gritar", "grito", "grita"], img: "😫", cat: "acciones" },
-            { palabras: ["abrazar", "abrazo", "abraza"], img: "🫂", cat: "acciones" },
-            { palabras: ["besar", "beso", "besa"], img: "💋", cat: "acciones" },
-            { palabras: ["doler", "duele", "lastimar"], img: "🤕", cat: "acciones" },
-            { palabras: ["terminar", "termino", "acabar", "fin"], img: "🏁", cat: "acciones" },
+            // ACCIONES Y VERBOS COMPLETOS (Azul)
+            { palabras: ["querer", "quiero", "quiere", "queremos", "quise", "queria", "quería"], img: "👐", cat: "acciones" },
+            { palabras: ["tener", "tengo", "tiene", "tenemos", "tuve", "tenia", "tenía", "teniendo"], img: "🤲", cat: "acciones" },
+            { palabras: ["ir", "voy", "vamos", "fue", "fui", "yendo", "iremos", "va", "van"], img: "🚶", cat: "acciones" },
+            { palabras: ["venir", "ven", "vengo", "viene", "viniendo", "vinieron", "vino"], img: "🏃", cat: "acciones" },
+            { palabras: ["estar", "estoy", "esta", "está", "estamos", "estuve", "estaba", "estando", "estan", "están"], img: "📍", cat: "acciones" },
+            { palabras: ["ser", "soy", "es", "somos", "fui", "era", "siendo", "son"], img: "👤", cat: "acciones" },
+            { palabras: ["hacer", "hago", "hace", "hacemos", "hice", "haciendo", "hacen"], img: "🛠️", cat: "acciones" },
+            { palabras: ["ver", "veo", "mirar", "miro", "ve", "vimos", "viendo", "mira", "mirando"], img: "👁️", cat: "acciones" },
+            { palabras: ["escuchar", "escucho", "oir", "oigo", "escucha", "escuchando", "oye", "oyendo"], img: "👂", cat: "acciones" },
+            { palabras: ["comer", "como", "come", "comiendo", "comemos", "comi", "comí", "comeran", "comio"], img: "🍽️", cat: "acciones" },
+            { palabras: ["beber", "bebo", "bebe", "tomar", "tomo", "toma", "bebiendo", "tomando"], img: "🚰", cat: "acciones" },
+            { palabras: ["dormir", "duermo", "duerme", "dormimos", "durmiendo", "durmio"], img: "💤", cat: "acciones" },
+            { palabras: ["jugar", "juego", "juega", "jugamos", "jugando", "jugue"], img: "🎮", cat: "acciones" },
+            { palabras: ["correr", "corro", "corre", "corriendo", "corremos", "corri"], img: "🏃‍♂️", cat: "acciones" },
+            { palabras: ["saltar", "salto", "salta", "saltando", "saltamos"], img: "🦘", cat: "acciones" },
+            { palabras: ["caminar", "camino", "andar", "pasear", "camina", "caminando", "paseando"], img: "🚶‍♂️", cat: "acciones" },
+            { palabras: ["hablar", "hablo", "decir", "digo", "habla", "hablando", "dice", "diciendo"], img: "🗣️", cat: "acciones" },
+            { palabras: ["leer", "leo", "lee", "leyendo", "leemos", "lei"], img: "📖", cat: "acciones" },
+            { palabras: ["escribir", "escribo", "escribe", "escribiendo", "escribimos"], img: "✍️", cat: "acciones" },
+            { palabras: ["dibujar", "dibujo", "pintar", "pinto", "dibuja", "dibujando", "pinta", "pintando"], img: "🎨", cat: "acciones" },
+            { palabras: ["cantar", "canto", "canta", "cantando", "cantamos"], img: "🎤", cat: "acciones" },
+            { palabras: ["bailar", "bailo", "baila", "bailando", "bailamos"], img: "💃", cat: "acciones" },
+            { palabras: ["dar", "doy", "da", "dame", "dando", "dimos", "dio"], img: "🎁", cat: "acciones" },
+            { palabras: ["tomar", "coger", "agarro", "coge", "cogiendo", "agarrando", "agarra"], img: "✊", cat: "acciones" },
+            { palabras: ["poner", "pongo", "pone", "poniendo", "pon", "puso"], img: "📥", cat: "acciones" },
+            { palabras: ["quitar", "quito", "quita", "sacar", "quitando", "saca", "sacando"], img: "📤", cat: "acciones" },
+            { palabras: ["abrir", "abro", "abre", "abriendo", "abrimos"], img: "👐", cat: "acciones" },
+            { palabras: ["cerrar", "cierro", "cierra", "cerrando", "cerramos"], img: "🚪", cat: "acciones" },
+            { palabras: ["entrar", "entro", "entra", "entrando", "entramos"], img: "🚶‍♂️➡️", cat: "acciones" },
+            { palabras: ["salir", "salgo", "sale", "saliendo", "salimos", "salio"], img: "🚪🏃", cat: "acciones" },
+            { palabras: ["subir", "subo", "sube", "subiendo", "subimos"], img: "⬆️", cat: "acciones" },
+            { palabras: ["bajar", "bajo", "baje", "baja", "bajando", "bajamos"], img: "⬇️", cat: "acciones" },
+            { palabras: ["esperar", "espero", "espera", "esperando", "esperamos"], img: "⏳", cat: "acciones" },
+            { palabras: ["parar", "paro", "para", "detener", "parando", "deteniendo"], img: "🛑", cat: "acciones" },
+            { palabras: ["ayudar", "ayudo", "ayuda", "ayudame", "ayudando", "ayudamos"], img: "🤝", cat: "acciones" },
+            { palabras: ["gustar", "gusta", "gusto", "agradar", "gustan"], img: "👍", cat: "acciones" },
+            { palabras: ["pensar", "pienso", "piensa", "pensando", "pensamos"], img: "💭", cat: "acciones" },
+            { palabras: ["saber", "se", "sé", "sabe", "sabiendo", "sabemos", "supo"], img: "💡", cat: "acciones" },
+            { palabras: ["aprender", "aprendo", "aprende", "aprendiendo", "aprendemos"], img: "🧠", cat: "acciones" },
+            { palabras: ["lavar", "lavo", "lava", "limpiar", "limpia", "lavando", "limpiando"], img: "🧼", cat: "acciones" },
+            { palabras: ["bañar", "baño", "duchar", "ducho", "bañando", "duchando", "baña"], img: "🛀", cat: "acciones" },
+            { palabras: ["vestir", "visto", "ropa", "ponerse", "vistiendo", "viste"], img: "👕", cat: "acciones" },
+            { palabras: ["comprar", "compro", "compra", "comprando", "compramos"], img: "🛒", cat: "acciones" },
+            { palabras: ["pagar", "pago", "paga", "pagando", "pagamos"], img: "💵", cat: "acciones" },
+            { palabras: ["llorar", "lloro", "llora", "llorando", "lloramos"], img: "😢", cat: "acciones" },
+            { palabras: ["reir", "rio", "rie", "sonreir", "riendo", "sonriendo", "sonrie"], img: "😄", cat: "acciones" },
+            { palabras: ["gritar", "grito", "grita", "gritando", "gritamos"], img: "😫", cat: "acciones" },
+            { palabras: ["abrazar", "abrazo", "abraza", "abrazando", "abrazamos"], img: "🫂", cat: "acciones" },
+            { palabras: ["besar", "beso", "besa", "besando", "besamos"], img: "💋", cat: "acciones" },
+            { palabras: ["doler", "duele", "lastimar", "doliendo", "duelen"], img: "🤕", cat: "acciones" },
+            { palabras: ["terminar", "termino", "acabar", "fin", "terminando", "termina"], img: "🏁", cat: "acciones" },
+            { palabras: ["caer", "caigo", "cae", "cayendo", "cayo", "caí"], img: "💥", cat: "acciones" },
+            { palabras: ["romper", "rompo", "rompe", "rompiendo", "roto"], img: "🔨", cat: "acciones" },
+            { palabras: ["trabajar", "trabajo", "trabaja", "trabajando"], img: "💼", cat: "acciones" },
+            { palabras: ["estudiar", "estudio", "estudia", "estudiando"], img: "📚", cat: "acciones" },
+            { palabras: ["ganar", "gano", "gana", "ganando"], img: "🏆", cat: "acciones" },
+            { palabras: ["perder", "pierdo", "pierde", "perdiendo"], img: "❌", cat: "acciones" },
+            { palabras: ["volar", "vuelo", "vuela", "volando"], img: "🦅", cat: "acciones" },
+            { palabras: ["nadar", "nado", "nada", "nadando"], img: "🏊", cat: "acciones" },
+            { palabras: ["pelear", "peleo", "pelea", "peleando", "luchar"], img: "🥊", cat: "acciones" },
+            { palabras: ["esconder", "escondo", "esconde", "escondiendo"], img: "🙈", cat: "acciones" },
+            { palabras: ["buscar", "busco", "busca", "buscando"], img: "🔍", cat: "acciones" },
+            { palabras: ["encontrar", "encuentro", "encuentra", "encontrando"], img: "🎯", cat: "acciones" },
+            { palabras: ["cocinar", "cocino", "cocina", "cocinando"], img: "🍳", cat: "acciones" },
+            { palabras: ["cortar", "corto", "corta", "cortando"], img: "✂️", cat: "acciones" },
+            { palabras: ["peinar", "peino", "peina", "peinando"], img: "🪮", cat: "acciones" },
+            { palabras: ["cepillar", "cepillo", "cepilla", "cepillando"], img: "🪥", cat: "acciones" },
+            { palabras: ["despertar", "despierto", "despierta", "despertando"], img: "⏰", cat: "acciones" },
+            { palabras: ["levantar", "levanto", "levanta", "levantando"], img: "⬆️", cat: "acciones" },
+            { palabras: ["sentar", "siento", "sienta", "sentando"], img: "🪑", cat: "acciones" },
+            { palabras: ["acostar", "acuesto", "acuesta", "acostando"], img: "🛏️", cat: "acciones" },
 
             // OBJETOS (Amarillo)
-            { palabras: ["agua"], img: "💧", cat: "objetos" },
+            { palabras: ["agua", "aguas"], img: "💧", cat: "objetos" },
             { palabras: ["juguete", "juguetes"], img: "🧸", cat: "objetos" },
-            { palabras: ["pelota", "balon"], img: "⚽", cat: "objetos" },
-            { palabras: ["coche", "auto", "carro"], img: "🚗", cat: "objetos" },
-            { palabras: ["tren"], img: "🚂", cat: "objetos" },
+            { palabras: ["pelota", "balon", "bola"], img: "⚽", cat: "objetos" },
+            { palabras: ["coche", "auto", "carro", "vehiculo"], img: "🚗", cat: "objetos" },
+            { palabras: ["tren", "ferrocarril"], img: "🚂", cat: "objetos" },
             { palabras: ["avion", "avión"], img: "✈️", cat: "objetos" },
-            { palabras: ["barco"], img: "⛵", cat: "objetos" },
+            { palabras: ["barco", "bote", "lancha"], img: "⛵", cat: "objetos" },
             { palabras: ["bicicleta", "bici"], img: "🚲", cat: "objetos" },
-            { palabras: ["libro", "cuento"], img: "📚", cat: "objetos" },
-            { palabras: ["lapiz", "lápiz", "boli", "boligrafo"], img: "✏️", cat: "objetos" },
-            { palabras: ["papel", "hoja"], img: "📄", cat: "objetos" },
-            { palabras: ["tijeras"], img: "✂️", cat: "objetos" },
-            { palabras: ["pegamento"], img: "🧴", cat: "objetos" },
-            { palabras: ["mesa"], img: "🪑", cat: "objetos" }, // Usando silla como prox
-            { palabras: ["silla"], img: "🪑", cat: "objetos" },
-            { palabras: ["cama"], img: "🛏️", cat: "objetos" },
-            { palabras: ["sofa", "sofá", "sillon"], img: "🛋️", cat: "objetos" },
+            { palabras: ["libro", "cuento", "libros"], img: "📚", cat: "objetos" },
+            { palabras: ["lapiz", "lápiz", "boli", "boligrafo", "lapicero"], img: "✏️", cat: "objetos" },
+            { palabras: ["papel", "hoja", "folio"], img: "📄", cat: "objetos" },
+            { palabras: ["tijeras", "tijera"], img: "✂️", cat: "objetos" },
+            { palabras: ["pegamento", "cola"], img: "🧴", cat: "objetos" },
+            { palabras: ["mesa", "escritorio", "pupitre"], img: "🪑", cat: "objetos" },
+            { palabras: ["silla", "asiento", "sillon"], img: "🪑", cat: "objetos" },
+            { palabras: ["cama", "camita"], img: "🛏️", cat: "objetos" },
+            { palabras: ["sofa", "sofá"], img: "🛋️", cat: "objetos" },
             { palabras: ["puerta"], img: "🚪", cat: "objetos" },
-            { palabras: ["ventana"], img: "🪟", cat: "objetos" },
-            { palabras: ["television", "tv", "tele"], img: "📺", cat: "objetos" },
-            { palabras: ["ordenador", "computadora", "pc"], img: "💻", cat: "objetos" },
-            { palabras: ["tablet", "ipad"], img: "📱", cat: "objetos" },
-            { palabras: ["telefono", "movil", "celular"], img: "📱", cat: "objetos" },
-            { palabras: ["auriculares", "cascos"], img: "🎧", cat: "objetos" },
+            { palabras: ["ventana", "cristal"], img: "🪟", cat: "objetos" },
+            { palabras: ["television", "tv", "tele", "televisor"], img: "📺", cat: "objetos" },
+            { palabras: ["ordenador", "computadora", "pc", "portatil"], img: "💻", cat: "objetos" },
+            { palabras: ["tablet", "ipad", "tableta"], img: "📱", cat: "objetos" },
+            { palabras: ["telefono", "movil", "celular", "smartphone"], img: "📱", cat: "objetos" },
+            { palabras: ["auriculares", "cascos", "audifonos"], img: "🎧", cat: "objetos" },
             { palabras: ["reloj"], img: "⌚", cat: "objetos" },
-            { palabras: ["gafas", "lentes"], img: "👓", cat: "objetos" },
-            { palabras: ["ropa"], img: "👕", cat: "objetos" },
-            { palabras: ["pantalon", "pantalón"], img: "👖", cat: "objetos" },
-            { palabras: ["camiseta"], img: "👕", cat: "objetos" },
-            { palabras: ["zapatos", "zapatillas"], img: "👟", cat: "objetos" },
-            { palabras: ["calcetines"], img: "🧦", cat: "objetos" },
-            { palabras: ["abrigo", "chaqueta"], img: "🧥", cat: "objetos" },
-            { palabras: ["sombrero", "gorra"], img: "🧢", cat: "objetos" },
-            { palabras: ["mochila"], img: "🎒", cat: "objetos" },
-            { palabras: ["dinero", "monedas"], img: "💰", cat: "objetos" },
+            { palabras: ["gafas", "lentes", "anteojos"], img: "👓", cat: "objetos" },
+            { palabras: ["ropa", "prendas"], img: "👕", cat: "objetos" },
+            { palabras: ["pantalon", "pantalón", "pantalones"], img: "👖", cat: "objetos" },
+            { palabras: ["camiseta", "playera", "remera"], img: "👕", cat: "objetos" },
+            { palabras: ["zapatos", "zapatillas", "calzado"], img: "👟", cat: "objetos" },
+            { palabras: ["calcetines", "medias"], img: "🧦", cat: "objetos" },
+            { palabras: ["abrigo", "chaqueta", "chamarra", "sueter"], img: "🧥", cat: "objetos" },
+            { palabras: ["sombrero", "gorra", "gorro"], img: "🧢", cat: "objetos" },
+            { palabras: ["mochila", "bolso", "cartera"], img: "🎒", cat: "objetos" },
+            { palabras: ["dinero", "monedas", "billetes"], img: "💰", cat: "objetos" },
             { palabras: ["llaves", "llave"], img: "🔑", cat: "objetos" },
             { palabras: ["cepillo"], img: "🪥", cat: "objetos" },
             { palabras: ["peine"], img: "🪮", cat: "objetos" },
-            { palabras: ["jabon", "jabón"], img: "🧼", cat: "objetos" },
+            { palabras: ["jabon", "jabón", "gel"], img: "🧼", cat: "objetos" },
             { palabras: ["toalla"], img: "🧖", cat: "objetos" },
             { palabras: ["papel higienico", "vater"], img: "🧻", cat: "objetos" },
-            { palabras: ["plato"], img: "🍽️", cat: "objetos" },
-            { palabras: ["vaso", "taza"], img: "🥛", cat: "objetos" },
+            { palabras: ["plato", "vajilla"], img: "🍽️", cat: "objetos" },
+            { palabras: ["vaso", "taza", "copa"], img: "🥛", cat: "objetos" },
             { palabras: ["cubiertos", "cuchara", "tenedor", "cuchillo"], img: "🍴", cat: "objetos" },
+            { palabras: ["basura", "papelera", "cubo"], img: "🗑️", cat: "objetos" },
+            { palabras: ["regalo", "obsequio"], img: "🎁", cat: "objetos" },
+            { palabras: ["foto", "fotografia", "camara"], img: "📷", cat: "objetos" },
+            { palabras: ["lluvia", "paraguas"], img: "☂️", cat: "objetos" },
+            { palabras: ["sol", "soleado"], img: "☀️", cat: "objetos" },
+            { palabras: ["luna", "noche"], img: "🌙", cat: "objetos" },
+            { palabras: ["estrella"], img: "⭐", cat: "objetos" },
+            { palabras: ["fuego", "lumbre"], img: "🔥", cat: "objetos" },
+            { palabras: ["flor", "flores", "planta"], img: "🌸", cat: "objetos" },
+            { palabras: ["arbol", "árbol"], img: "🌳", cat: "objetos" },
 
             // LUGARES (Verde)
-            { palabras: ["casa", "hogar"], img: "🏠", cat: "lugares" },
-            { palabras: ["colegio", "escuela", "cole"], img: "🏫", cat: "lugares" },
-            { palabras: ["parque"], img: "🏞️", cat: "lugares" },
-            { palabras: ["calle"], img: "🛣️", cat: "lugares" },
-            { palabras: ["tienda", "supermercado", "comprar"], img: "🏪", cat: "lugares" },
-            { palabras: ["hospital", "medico"], img: "🏥", cat: "lugares" },
-            { palabras: ["restaurante", "bar"], img: "🍽️", cat: "lugares" },
-            { palabras: ["cine"], img: "🎬", cat: "lugares" },
-            { palabras: ["playa"], img: "🏖️", cat: "lugares" },
-            { palabras: ["piscina"], img: "🏊", cat: "lugares" },
-            { palabras: ["campo", "bosque"], img: "🌲", cat: "lugares" },
-            { palabras: ["ciudad", "pueblo"], img: "🏙️", cat: "lugares" },
-            { palabras: ["habitacion", "cuarto", "dormitorio"], img: "🛏️", cat: "lugares" },
-            { palabras: ["baño", "aseo", "servicio"], img: "🚽", cat: "lugares" },
+            { palabras: ["casa", "hogar", "vivienda"], img: "🏠", cat: "lugares" },
+            { palabras: ["colegio", "escuela", "cole", "instituto"], img: "🏫", cat: "lugares" },
+            { palabras: ["parque", "plaza"], img: "🏞️", cat: "lugares" },
+            { palabras: ["calle", "carretera", "avenida"], img: "🛣️", cat: "lugares" },
+            { palabras: ["tienda", "supermercado", "comercio", "mercado"], img: "🏪", cat: "lugares" },
+            { palabras: ["hospital", "clinica", "ambulatorio"], img: "🏥", cat: "lugares" },
+            { palabras: ["restaurante", "bar", "cafeteria"], img: "🍽️", cat: "lugares" },
+            { palabras: ["cine", "teatro"], img: "🎬", cat: "lugares" },
+            { palabras: ["playa", "mar", "arena"], img: "🏖️", cat: "lugares" },
+            { palabras: ["piscina", "pileta"], img: "🏊", cat: "lugares" },
+            { palabras: ["campo", "bosque", "montaña"], img: "🌲", cat: "lugares" },
+            { palabras: ["ciudad", "pueblo", "urbe"], img: "🏙️", cat: "lugares" },
+            { palabras: ["habitacion", "cuarto", "dormitorio", "pieza"], img: "🛏️", cat: "lugares" },
+            { palabras: ["baño", "aseo", "servicio", "lavabo"], img: "🚽", cat: "lugares" },
             { palabras: ["cocina"], img: "🍳", cat: "lugares" },
-            { palabras: ["salon", "salón", "comedor"], img: "🛋️", cat: "lugares" },
+            { palabras: ["salon", "salón", "comedor", "sala"], img: "🛋️", cat: "lugares" },
+            { palabras: ["patio", "jardin", "terraza"], img: "🪴", cat: "lugares" },
+            { palabras: ["iglesia", "templo"], img: "⛪", cat: "lugares" },
+            { palabras: ["banco"], img: "🏦", cat: "lugares" },
 
             // EMOCIONES Y ADJETIVOS (Rojo)
-            { palabras: ["feliz", "contento", "alegre", "bien"], img: "😀", cat: "emociones" },
-            { palabras: ["triste", "pena", "mal"], img: "😢", cat: "emociones" },
-            { palabras: ["enfadado", "enojado", "rabia"], img: "😠", cat: "emociones" },
-            { palabras: ["asustado", "miedo"], img: "😨", cat: "emociones" },
-            { palabras: ["sorprendido", "sorpresa"], img: "😲", cat: "emociones" },
-            { palabras: ["cansado", "sueño", "agotado"], img: "🥱", cat: "emociones" },
-            { palabras: ["enfermo", "malo"], img: "🤒", cat: "emociones" },
-            { palabras: ["aburrido"], img: "😒", cat: "emociones" },
-            { palabras: ["calor", "caliente"], img: "🥵", cat: "emociones" },
-            { palabras: ["frio", "frío", "helado"], img: "🥶", cat: "emociones" },
+            { palabras: ["feliz", "contento", "alegre", "bien", "felicidad", "alegria"], img: "😀", cat: "emociones" },
+            { palabras: ["triste", "pena", "mal", "tristeza", "lloroso"], img: "😢", cat: "emociones" },
+            { palabras: ["enfadado", "enojado", "rabia", "furioso", "molesto"], img: "😠", cat: "emociones" },
+            { palabras: ["asustado", "miedo", "temor", "susto"], img: "😨", cat: "emociones" },
+            { palabras: ["sorprendido", "sorpresa", "asombro"], img: "😲", cat: "emociones" },
+            { palabras: ["cansado", "sueño", "agotado", "fatiga"], img: "🥱", cat: "emociones" },
+            { palabras: ["enfermo", "malo", "pachucho", "malito"], img: "🤒", cat: "emociones" },
+            { palabras: ["aburrido", "aburrimiento"], img: "😒", cat: "emociones" },
+            { palabras: ["calor", "caliente", "ardiendo", "quemando"], img: "🥵", cat: "emociones" },
+            { palabras: ["frio", "frío", "helado", "congelado"], img: "🥶", cat: "emociones" },
             { palabras: ["hambre", "hambriento"], img: "🤤", cat: "emociones" },
             { palabras: ["sed", "sediento"], img: "🥵", cat: "emociones" },
-            { palabras: ["bueno", "bien", "genial"], img: "👍", cat: "emociones" },
-            { palabras: ["malo", "mal", "pesimo"], img: "👎", cat: "emociones" },
-            { palabras: ["grande", "enorme"], img: "🐘", cat: "emociones" },
-            { palabras: ["pequeño", "chico"], img: "🐁", cat: "emociones" },
-            { palabras: ["bonito", "lindo", "hermoso"], img: "✨", cat: "emociones" },
-            { palabras: ["feo"], img: "💩", cat: "emociones" },
-            { palabras: ["limpio"], img: "✨", cat: "emociones" },
-            { palabras: ["sucio"], img: "💩", cat: "emociones" },
-            { palabras: ["rapido", "rápido", "deprisa"], img: "🐇", cat: "emociones" },
-            { palabras: ["lento", "despacio"], img: "🐢", cat: "emociones" },
-            { palabras: ["fuerte"], img: "💪", cat: "emociones" },
-            { palabras: ["roto", "estropeado"], img: "💔", cat: "emociones" },
-            { palabras: ["si", "sí", "afirmativo"], img: "✅", cat: "emociones" },
-            { palabras: ["no", "negativo", "prohibido"], img: "❌", cat: "emociones" },
+            { palabras: ["bueno", "bien", "genial", "excelente", "estupendo"], img: "👍", cat: "emociones" },
+            { palabras: ["malo", "mal", "pesimo", "horrible"], img: "👎", cat: "emociones" },
+            { palabras: ["grande", "enorme", "gigante"], img: "🐘", cat: "emociones" },
+            { palabras: ["pequeño", "chico", "diminuto", "enano"], img: "🐁", cat: "emociones" },
+            { palabras: ["bonito", "lindo", "hermoso", "precioso", "guapo"], img: "✨", cat: "emociones" },
+            { palabras: ["feo", "horrendo"], img: "💩", cat: "emociones" },
+            { palabras: ["limpio", "aseado", "puro"], img: "✨", cat: "emociones" },
+            { palabras: ["sucio", "manchado", "guarro"], img: "💩", cat: "emociones" },
+            { palabras: ["rapido", "rápido", "deprisa", "veloz"], img: "🐇", cat: "emociones" },
+            { palabras: ["lento", "despacio", "pausado"], img: "🐢", cat: "emociones" },
+            { palabras: ["fuerte", "musculoso", "duro"], img: "💪", cat: "emociones" },
+            { palabras: ["debil", "débil", "flojo"], img: "🥀", cat: "emociones" },
+            { palabras: ["roto", "estropeado", "dañado", "descompuesto"], img: "💔", cat: "emociones" },
+            { palabras: ["nuevo", "estrenar"], img: "🆕", cat: "emociones" },
+            { palabras: ["viejo", "antiguo", "anciano"], img: "👴", cat: "emociones" },
+            { palabras: ["si", "sí", "afirmativo", "claro", "ok", "vale"], img: "✅", cat: "emociones" },
+            { palabras: ["no", "negativo", "prohibido", "nunca", "jamas"], img: "❌", cat: "emociones" },
+            { palabras: ["mas", "más", "mucho", "bastante"], img: "➕", cat: "emociones" },
+            { palabras: ["menos", "poco", "poquito"], img: "➖", cat: "emociones" },
+            { palabras: ["todo", "todos", "entero"], img: "💯", cat: "emociones" },
+            { palabras: ["nada", "vacio", "ninguno"], img: "🕳️", cat: "emociones" },
+            { palabras: ["igual", "mismo"], img: "🟰", cat: "emociones" },
+            { palabras: ["diferente", "distinto"], img: "≠", cat: "emociones" },
+            { palabras: ["arriba", "encima", "alto"], img: "⬆️", cat: "emociones" },
+            { palabras: ["abajo", "debajo", "bajo"], img: "⬇️", cat: "emociones" },
+            { palabras: ["dentro", "adentro", "interior"], img: "📥", cat: "emociones" },
+            { palabras: ["fuera", "afuera", "exterior"], img: "📤", cat: "emociones" },
 
             // ALIMENTOS (Marrón)
-            { palabras: ["comida", "alimento"], img: "🍲", cat: "alimentos" },
-            { palabras: ["pan"], img: "🥖", cat: "alimentos" },
-            { palabras: ["leche"], img: "🥛", cat: "alimentos" },
+            { palabras: ["comida", "alimento", "comer"], img: "🍲", cat: "alimentos" },
+            { palabras: ["pan", "bollo", "baguette"], img: "🥖", cat: "alimentos" },
+            { palabras: ["leche", "lacteo"], img: "🥛", cat: "alimentos" },
             { palabras: ["queso"], img: "🧀", cat: "alimentos" },
-            { palabras: ["huevo", "huevos"], img: "🥚", cat: "alimentos" },
-            { palabras: ["carne"], img: "🥩", cat: "alimentos" },
-            { palabras: ["pollo"], img: "🍗", cat: "alimentos" },
-            { palabras: ["pescado", "pez"], img: "🐟", cat: "alimentos" },
-            { palabras: ["arroz"], img: "🍚", cat: "alimentos" },
-            { palabras: ["pasta", "espaguetis", "macarrones"], img: "🍝", cat: "alimentos" },
-            { palabras: ["fruta"], img: "🍎", cat: "alimentos" },
+            { palabras: ["huevo", "huevos", "tortilla"], img: "🥚", cat: "alimentos" },
+            { palabras: ["carne", "filete", "chuleta"], img: "🥩", cat: "alimentos" },
+            { palabras: ["pollo", "pavo", "ave"], img: "🍗", cat: "alimentos" },
+            { palabras: ["pescado", "pez", "marisco", "atun"], img: "🐟", cat: "alimentos" },
+            { palabras: ["arroz", "paella"], img: "🍚", cat: "alimentos" },
+            { palabras: ["pasta", "espaguetis", "macarrones", "fideos"], img: "🍝", cat: "alimentos" },
+            { palabras: ["fruta", "frutas"], img: "🍎", cat: "alimentos" },
             { palabras: ["manzana"], img: "🍎", cat: "alimentos" },
             { palabras: ["platano", "plátano", "banana"], img: "🍌", cat: "alimentos" },
-            { palabras: ["naranja"], img: "🍊", cat: "alimentos" },
+            { palabras: ["naranja", "mandarina"], img: "🍊", cat: "alimentos" },
             { palabras: ["uva", "uvas"], img: "🍇", cat: "alimentos" },
             { palabras: ["fresa", "frutilla"], img: "🍓", cat: "alimentos" },
-            { palabras: ["verdura", "vegetales"], img: "🥦", cat: "alimentos" },
-            { palabras: ["tomate"], img: "🍅", cat: "alimentos" },
+            { palabras: ["sandia", "sandía"], img: "🍉", cat: "alimentos" },
+            { palabras: ["melon", "melón"], img: "🍈", cat: "alimentos" },
+            { palabras: ["verdura", "vegetales", "ensalada"], img: "🥦", cat: "alimentos" },
+            { palabras: ["tomate", "jitomate"], img: "🍅", cat: "alimentos" },
             { palabras: ["zanahoria"], img: "🥕", cat: "alimentos" },
-            { palabras: ["patata", "papa", "patatas"], img: "🥔", cat: "alimentos" },
-            { palabras: ["sopa", "caldo"], img: "🥣", cat: "alimentos" },
+            { palabras: ["patata", "papa", "patatas", "papas", "puré"], img: "🥔", cat: "alimentos" },
+            { palabras: ["cebolla"], img: "🧅", cat: "alimentos" },
+            { palabras: ["ajo"], img: "🧄", cat: "alimentos" },
+            { palabras: ["sopa", "caldo", "pure"], img: "🥣", cat: "alimentos" },
             { palabras: ["pizza"], img: "🍕", cat: "alimentos" },
             { palabras: ["hamburguesa"], img: "🍔", cat: "alimentos" },
-            { palabras: ["bocadillo", "sandwich"], img: "🥪", cat: "alimentos" },
-            { palabras: ["galleta", "galletas"], img: "🍪", cat: "alimentos" },
-            { palabras: ["pastel", "tarta"], img: "🍰", cat: "alimentos" },
-            { palabras: ["helado"], img: "🍦", cat: "alimentos" },
-            { palabras: ["chocolate"], img: "🍫", cat: "alimentos" },
-            { palabras: ["zumo", "jugo"], img: "🧃", cat: "alimentos" },
+            { palabras: ["bocadillo", "sandwich", "emparedado"], img: "🥪", cat: "alimentos" },
+            { palabras: ["galleta", "galletas", "pasta"], img: "🍪", cat: "alimentos" },
+            { palabras: ["pastel", "tarta", "torta", "bizcocho"], img: "🍰", cat: "alimentos" },
+            { palabras: ["helado", "polo"], img: "🍦", cat: "alimentos" },
+            { palabras: ["chocolate", "cacao", "bombones"], img: "🍫", cat: "alimentos" },
+            { palabras: ["caramelo", "chuche", "dulce", "golosina"], img: "🍬", cat: "alimentos" },
+            { palabras: ["zumo", "jugo", "refresco"], img: "🧃", cat: "alimentos" },
+            { palabras: ["agua", "bebida"], img: "💧", cat: "alimentos" },
+            { palabras: ["cafe", "café"], img: "☕", cat: "alimentos" },
+            { palabras: ["te", "té", "infusion"], img: "🍵", cat: "alimentos" },
+            { palabras: ["sal", "pimienta"], img: "🧂", cat: "alimentos" },
+            { palabras: ["azucar", "miel"], img: "🍯", cat: "alimentos" },
+            { palabras: ["aceite", "vinagre"], img: "🫙", cat: "alimentos" },
 
             // ANIMALES (Amarillo / Objetos)
-            { palabras: ["animal", "animales"], img: "🐾", cat: "objetos" },
-            { palabras: ["perro", "perrito"], img: "🐶", cat: "objetos" },
-            { palabras: ["gato", "gatito"], img: "🐱", cat: "objetos" },
-            { palabras: ["pajaro", "pájaro"], img: "🐦", cat: "objetos" },
-            { palabras: ["pez", "peces"], img: "🐟", cat: "objetos" },
-            { palabras: ["caballo"], img: "🐴", cat: "objetos" },
-            { palabras: ["vaca"], img: "🐮", cat: "objetos" },
-            { palabras: ["cerdo"], img: "🐷", cat: "objetos" },
-            { palabras: ["oveja"], img: "🐑", cat: "objetos" },
-            { palabras: ["gallina", "pollo"], img: "🐔", cat: "objetos" },
-            { palabras: ["pato"], img: "🦆", cat: "objetos" },
-            { palabras: ["leon", "león"], img: "🦁", cat: "objetos" },
+            { palabras: ["animal", "animales", "bicho", "mascota"], img: "🐾", cat: "objetos" },
+            { palabras: ["perro", "perrito", "can"], img: "🐶", cat: "objetos" },
+            { palabras: ["gato", "gatito", "minino"], img: "🐱", cat: "objetos" },
+            { palabras: ["pajaro", "pájaro", "ave", "pajarito"], img: "🐦", cat: "objetos" },
+            { palabras: ["pez", "peces", "pescado"], img: "🐟", cat: "objetos" },
+            { palabras: ["caballo", "yegua", "potro"], img: "🐴", cat: "objetos" },
+            { palabras: ["vaca", "toro", "ternero"], img: "🐮", cat: "objetos" },
+            { palabras: ["cerdo", "chancho", "puerco"], img: "🐷", cat: "objetos" },
+            { palabras: ["oveja", "cordero", "cabra"], img: "🐑", cat: "objetos" },
+            { palabras: ["gallina", "pollo", "gallo", "pollito"], img: "🐔", cat: "objetos" },
+            { palabras: ["pato", "oca"], img: "🦆", cat: "objetos" },
+            { palabras: ["leon", "león", "leona"], img: "🦁", cat: "objetos" },
             { palabras: ["tigre"], img: "🐯", cat: "objetos" },
             { palabras: ["elefante"], img: "🐘", cat: "objetos" },
-            { palabras: ["mono"], img: "🐵", cat: "objetos" },
-            { palabras: ["oso"], img: "🐻", cat: "objetos" },
+            { palabras: ["mono", "simio", "gorila"], img: "🐵", cat: "objetos" },
+            { palabras: ["oso", "panda"], img: "🐻", cat: "objetos" },
             { palabras: ["rana", "sapo"], img: "🐸", cat: "objetos" },
             { palabras: ["tortuga"], img: "🐢", cat: "objetos" },
-            { palabras: ["serpiente"], img: "🐍", cat: "objetos" },
-            { palabras: ["insecto", "bicho", "mosca"], img: "🪰", cat: "objetos" },
+            { palabras: ["serpiente", "culebra", "vibora"], img: "🐍", cat: "objetos" },
+            { palabras: ["insecto", "bicho", "mosca", "mosquito"], img: "🪰", cat: "objetos" },
             { palabras: ["araña"], img: "🕷️", cat: "objetos" },
-            { palabras: ["mariposa"], img: "🦋", cat: "objetos" },
-            { palabras: ["abeja"], img: "🐝", cat: "objetos" }
+            { palabras: ["mariposa", "oruga"], img: "🦋", cat: "objetos" },
+            { palabras: ["abeja", "avispa"], img: "🐝", cat: "objetos" },
+            { palabras: ["hormiga"], img: "🐜", cat: "objetos" },
+            { palabras: ["caracol"], img: "🐌", cat: "objetos" },
+            { palabras: ["raton", "ratón", "rata"], img: "🐭", cat: "objetos" },
+            { palabras: ["conejo", "liebre"], img: "🐰", cat: "objetos" },
+            { palabras: ["jirafa"], img: "🦒", cat: "objetos" },
+            { palabras: ["cebra"], img: "🦓", cat: "objetos" },
+            { palabras: ["delfin", "ballena", "tiburon"], img: "🐬", cat: "objetos" },
+            { palabras: ["pinguino", "pingüino"], img: "🐧", cat: "objetos" },
+            { palabras: ["dinosaurio", "dino"], img: "🦖", cat: "objetos" }
+
         ];
 
         /* =========================================================================
@@ -984,9 +1111,16 @@
                 showText: localStorage.getItem('showText') !== 'false',
                 voiceURI: localStorage.getItem('voiceURI') || '',
                 voiceRate: parseFloat(localStorage.getItem('voiceRate')) || 1.0,
-                theme: localStorage.getItem('theme') || 'light'
+                theme: localStorage.getItem('theme') || 'light',
+                apiKey: localStorage.getItem('apiKey') ? atob(localStorage.getItem('apiKey')) : '',
+                autoAI: localStorage.getItem('autoAI') === 'true'
             }
         };
+
+        // Utilidad para obfuscación simple de la key en localStorage
+        function getObfuscatedKey(key) {
+            return btoa(key);
+        }
 
         // Combina el diccionario interno con los personalizados
         const getFullDict = () => [...diccionario, ...state.customDict];
@@ -1017,7 +1151,7 @@
                 clearTimeout(debounceTimer);
                 debounceTimer = setTimeout(() => {
                     generatePictograms(textInput.value);
-                }, 800);
+                }, 600);
             });
 
             document.getElementById('generate-btn').addEventListener('click', () => {
@@ -1084,6 +1218,16 @@
                 state.settings.voiceRate = val;
                 document.getElementById('rate-value').textContent = val === 1 ? 'Normal' : val + 'x';
                 saveState('settings', state.settings);
+            });
+
+            document.getElementById('api-key-input').addEventListener('change', (e) => {
+                state.settings.apiKey = e.target.value;
+                localStorage.setItem('apiKey', getObfuscatedKey(e.target.value));
+            });
+
+            document.getElementById('auto-ai-toggle').addEventListener('change', (e) => {
+                state.settings.autoAI = e.target.checked;
+                localStorage.setItem('autoAI', e.target.checked);
             });
 
             document.getElementById('reset-data-btn').addEventListener('click', () => {
@@ -1157,14 +1301,105 @@
                 if (pictoData) {
                     container.appendChild(createPictogramElement(pictoData, cleanWord));
                 } else {
-                    // Generar un pictograma en blanco para palabra desconocida
-                    container.appendChild(createPictogramElement({
-                        img: "❓",
-                        cat: "otros",
-                        palabras: [cleanWord]
-                    }, cleanWord));
+                    // Generar un pictograma en blanco para palabra desconocida con botón de IA
+                    const unknownData = { img: "❓", cat: "otros", palabras: [cleanWord] };
+                    const el = createPictogramElement(unknownData, cleanWord);
+
+                    if (state.settings.apiKey && state.settings.autoAI) {
+                        // Generar automáticamente
+                        generateAIPictogram(cleanWord, el);
+                    } else {
+                        // Mostrar botón SIEMPRE para permitir descubrimiento
+                        const aiBtn = document.createElement('button');
+                        aiBtn.className = 'ai-generate-btn';
+                        aiBtn.textContent = '✨ Generar con IA';
+                        aiBtn.onclick = () => {
+                            if (!state.settings.apiKey) {
+                                alert('Por favor, ve a la pestaña "Ajustes" e introduce tu API Key de Open Router primero.');
+                                switchTab('settings');
+                                return;
+                            }
+                            generateAIPictogram(cleanWord, el);
+                        };
+                        el.appendChild(aiBtn);
+                    }
+                    container.appendChild(el);
                 }
             });
+        }
+
+        async function generateAIPictogram(word, domElement) {
+            if (!state.settings.apiKey) {
+                alert('Por favor, configura tu API Key de Open Router en Ajustes.');
+                return;
+            }
+
+            // Mostrar estado de carga
+            domElement.innerHTML = `
+                <div class="loading-spinner">⏳</div>
+                <div class="picto-label">Generando...</div>
+            `;
+
+            try {
+                const prompt = `Eres un experto ilustrador de comunicación aumentativa y alternativa (CAA), estilo ARASAAC.
+Genera un SVG puro, limpio, simple y minimalista que represente la palabra/concepto: "${word}".
+Requisitos estrictos del SVG:
+- Estilo ARASAAC: líneas gruesas negras, colores planos vivos, fondo transparente, siluetas estilizadas y fáciles de entender para niños con autismo.
+- viewBox="0 0 200 200"
+- NO incluyas la palabra escrita dentro de la imagen.
+- NO uses sombras ni degradados ni detalles hiperrealistas.
+- Devuelve SOLO el código SVG válido, sin etiquetas de markdown ni explicaciones. Debe empezar con <svg y terminar con </svg>.`;
+
+                const response = await fetch('https://openrouter.ai/api/v1/chat/completions', {
+                    method: 'POST',
+                    headers: {
+                        'Authorization': \`Bearer \${state.settings.apiKey}\`,
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({
+                        model: 'anthropic/claude-3-haiku', // Fast and capable of SVG
+                        messages: [{ role: 'user', content: prompt }]
+                    })
+                });
+
+                if (!response.ok) throw new Error('Error en la API');
+
+                const data = await response.json();
+                let svgContent = data.choices[0].message.content.trim();
+
+                // Limpiar posibles bloques de markdown
+                if (svgContent.startsWith('\`\`\`')) {
+                    svgContent = svgContent.replace(/\`\`\`(xml|svg)?\n?/g, '').replace(/\`\`\`$/g, '').trim();
+                }
+
+                // Codificar a base64 para guardarlo
+                const base64SVG = "data:image/svg+xml;base64," + btoa(unescape(encodeURIComponent(svgContent)));
+
+                // Asignar categoría genérica (objetos) por defecto
+                const newEntry = {
+                    palabras: [word.toLowerCase()],
+                    img: base64SVG,
+                    cat: "objetos" // Por defecto
+                };
+
+                // Guardar en dict personalizado
+                state.customDict.push(newEntry);
+                saveState('customDict', state.customDict);
+
+                // Actualizar UI
+                const newEl = createPictogramElement(newEntry, word, null, true);
+                domElement.replaceWith(newEl);
+
+                renderCustomGrid();
+                renderLibrary();
+
+            } catch (error) {
+                console.error(error);
+                domElement.innerHTML = `
+                    <div class="picto-img">❌</div>
+                    <div class="picto-label">Error AI</div>
+                `;
+            }
         }
 
         function createPictogramElement(data, displayWord, id = null, isDraggable = true) {
@@ -1177,16 +1412,37 @@
                 el.addEventListener('dragstart', drag);
             }
 
-            // Si es base64 (imagen subida) o emoji
-            const imgContent = data.img.startsWith('data:image')
-                ? `<img src="${data.img}" class="picto-img" alt="${displayWord}" style="width:100%; height:100%; object-fit:contain;">`
-                : `<div class="picto-img">${data.img}</div>`;
+            // Para evitar XSS con textContent
+            const safeWord = document.createElement('div');
+            safeWord.className = 'picto-label';
+            safeWord.textContent = displayWord;
 
-            el.innerHTML = `
-                ${imgContent}
-                <div class="picto-label">${displayWord}</div>
-                <button class="remove-btn" onclick="this.parentElement.remove()" title="Eliminar" style="display:none;">✕</button>
-            `;
+            const removeBtn = document.createElement('button');
+            removeBtn.className = 'remove-btn';
+            removeBtn.title = 'Eliminar';
+            removeBtn.style.display = 'none';
+            removeBtn.textContent = '✕';
+            removeBtn.onclick = function() { this.parentElement.remove(); };
+
+            // Si es base64 (imagen subida) o emoji
+            if (data.img.startsWith('data:image')) {
+                const img = document.createElement('img');
+                img.src = data.img;
+                img.className = 'picto-img';
+                img.alt = displayWord;
+                img.style.width = '100%';
+                img.style.height = '100%';
+                img.style.objectFit = 'contain';
+                el.appendChild(img);
+            } else {
+                const div = document.createElement('div');
+                div.className = 'picto-img';
+                div.textContent = data.img;
+                el.appendChild(div);
+            }
+
+            el.appendChild(safeWord);
+            el.appendChild(removeBtn);
 
             return el;
         }
@@ -1484,6 +1740,9 @@
             document.getElementById('show-text-toggle').checked = state.settings.showText;
             document.getElementById('voice-rate').value = state.settings.voiceRate;
             document.getElementById('rate-value').textContent = state.settings.voiceRate === 1 ? 'Normal' : state.settings.voiceRate + 'x';
+
+            document.getElementById('api-key-input').value = state.settings.apiKey;
+            document.getElementById('auto-ai-toggle').checked = state.settings.autoAI;
 
             applyTheme();
             applyTextVisibility();

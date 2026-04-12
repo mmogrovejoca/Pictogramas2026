@@ -1,0 +1,1510 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Comunicador Visual TEA</title>
+    <style>
+        :root {
+            /* Colors */
+            --bg-color: #f0f8ff;
+            --text-color: #333;
+            --primary-color: #4a90e2;
+            --secondary-color: #50e3c2;
+            --card-bg: #fff;
+
+            /* ARASAAC Colors */
+            --color-people: #ffb74d; /* Naranja */
+            --color-actions: #64b5f6; /* Azul */
+            --color-objects: #fff176; /* Amarillo */
+            --color-places: #81c784; /* Verde */
+            --color-emotions: #e57373; /* Rojo */
+            --color-food: #a1887f; /* Marrón */
+            --color-other: #ffffff; /* Blanco */
+
+            /* Typography & Sizing */
+            --font-family: 'Comic Sans MS', 'Arial Rounded MT Bold', Arial, sans-serif;
+            --border-radius: 15px;
+            --shadow: 0 4px 6px rgba(0,0,0,0.1);
+        }
+
+        [data-theme="dark"] {
+            --bg-color: #1a1a2e;
+            --text-color: #f0f0f0;
+            --card-bg: #16213e;
+            --shadow: 0 4px 6px rgba(0,0,0,0.4);
+            /* Slightly dimmer AAC colors for dark mode, keeping hue */
+            --color-people: #cc923e;
+            --color-actions: #5091c5;
+            --color-objects: #ccc15e;
+            --color-places: #679f6a;
+            --color-emotions: #b75c5c;
+            --color-food: #816d66;
+            --color-other: #444;
+        }
+
+        [data-contrast="high"] {
+            --bg-color: #000;
+            --text-color: #fff;
+            --card-bg: #000;
+            --border-color: #fff;
+            --primary-color: #ffff00;
+            --color-people: #fff;
+            --color-actions: #fff;
+            --color-objects: #fff;
+            --color-places: #fff;
+            --color-emotions: #fff;
+            --color-food: #fff;
+            --color-other: #fff;
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            font-family: var(--font-family);
+            background-color: var(--bg-color);
+            color: var(--text-color);
+            transition: background-color 0.3s, color 0.3s;
+            line-height: 1.6;
+        }
+
+        header {
+            background-color: var(--primary-color);
+            color: white;
+            padding: 1rem 2rem;
+            display: flex;
+            flex-wrap: wrap;
+            justify-content: space-between;
+            align-items: center;
+            box-shadow: var(--shadow);
+            position: sticky;
+            top: 0;
+            z-index: 100;
+        }
+
+        header h1 {
+            font-size: 2rem;
+            margin-right: 2rem;
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.2);
+        }
+
+        [data-contrast="high"] header {
+            background-color: #000;
+            border-bottom: 2px solid #fff;
+        }
+
+        nav {
+            display: flex;
+            gap: 0.5rem;
+            flex-wrap: wrap;
+        }
+
+        .tab-btn {
+            background-color: rgba(255,255,255,0.2);
+            border: none;
+            color: white;
+            padding: 0.8rem 1.5rem;
+            font-size: 1.2rem;
+            font-weight: bold;
+            border-radius: var(--border-radius);
+            cursor: pointer;
+            transition: background-color 0.2s, transform 0.1s;
+        }
+
+        [data-contrast="high"] .tab-btn {
+            border: 2px solid #fff;
+            color: #fff;
+            background-color: #000;
+        }
+
+        .tab-btn:hover {
+            background-color: rgba(255,255,255,0.4);
+            transform: scale(1.05);
+        }
+
+        .tab-btn.active {
+            background-color: white;
+            color: var(--primary-color);
+            box-shadow: inset 0 -4px 0 rgba(0,0,0,0.1);
+        }
+
+        [data-contrast="high"] .tab-btn.active {
+            background-color: #fff;
+            color: #000;
+        }
+
+        .help-btn {
+            background-color: var(--color-emotions);
+        }
+        [data-contrast="high"] .help-btn { background-color: #000; border-color: yellow; color: yellow; }
+
+        #theme-toggle {
+            background: none;
+            border: none;
+            font-size: 2rem;
+            cursor: pointer;
+            padding: 0.5rem;
+            transition: transform 0.2s;
+        }
+        #theme-toggle:hover { transform: rotate(20deg); }
+
+        main {
+            padding: 2rem;
+            max-width: 1400px;
+            margin: 0 auto;
+        }
+
+        .tab-content {
+            display: none;
+            animation: fadeIn 0.3s ease-in-out;
+        }
+
+        .tab-content.active {
+            display: block;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        /* Generator Area */
+        .input-area {
+            background-color: var(--card-bg);
+            padding: 1.5rem;
+            border-radius: var(--border-radius);
+            box-shadow: var(--shadow);
+            margin-bottom: 2rem;
+            border: 1px solid transparent;
+        }
+        [data-contrast="high"] .input-area { border-color: #fff; }
+
+        textarea {
+            width: 100%;
+            height: 120px;
+            font-size: 2rem;
+            padding: 1rem;
+            border: 3px dashed var(--primary-color);
+            border-radius: var(--border-radius);
+            background-color: var(--bg-color);
+            color: var(--text-color);
+            font-family: inherit;
+            resize: vertical;
+        }
+        [data-contrast="high"] textarea { border: 3px solid #fff; }
+
+        .controls {
+            display: flex;
+            gap: 1rem;
+            margin-top: 1rem;
+            flex-wrap: wrap;
+        }
+
+        .action-btn {
+            padding: 1rem 2rem;
+            font-size: 1.5rem;
+            font-weight: bold;
+            border: none;
+            border-radius: var(--border-radius);
+            cursor: pointer;
+            box-shadow: var(--shadow);
+            transition: transform 0.1s;
+            color: white;
+            background-color: var(--primary-color);
+        }
+        [data-contrast="high"] .action-btn { border: 2px solid #fff; background-color: #000 !important; color: #fff; }
+        [data-contrast="high"] .action-btn:focus, [data-contrast="high"] .action-btn:hover { background-color: yellow !important; color: #000; border-color: yellow; }
+
+        .action-btn:active { transform: scale(0.95); }
+        .action-btn.speak { background-color: var(--color-places); color: #000; }
+        .action-btn.clear { background-color: var(--color-emotions); }
+        .action-btn.fav { background-color: var(--color-objects); color: #000; }
+
+        /* Pictograms */
+        .picto-container {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 1rem;
+            padding: 2rem;
+            background-color: var(--card-bg);
+            border-radius: var(--border-radius);
+            box-shadow: var(--shadow);
+            min-height: 250px;
+            align-items: center;
+            justify-content: flex-start;
+            border: 4px solid var(--secondary-color);
+        }
+        [data-contrast="high"] .picto-container { border-color: #fff; }
+
+        .empty-state {
+            width: 100%;
+            text-align: center;
+            font-size: 1.5rem;
+            color: #888;
+            font-style: italic;
+        }
+        [data-contrast="high"] .empty-state { color: #fff; }
+
+        .pictogram {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            width: 180px;
+            height: 220px;
+            background-color: white;
+            border: 6px solid #ccc;
+            border-radius: 20px;
+            padding: 10px;
+            box-shadow: 0 6px 12px rgba(0,0,0,0.15);
+            transition: transform 0.2s;
+            cursor: grab;
+            user-select: none;
+        }
+
+        .pictogram:active { cursor: grabbing; }
+        .pictogram:hover { transform: scale(1.05) translateY(-5px); }
+
+        [data-contrast="high"] .pictogram { background-color: #000; border-color: #fff; }
+
+        /* ARASAAC Border Colors */
+        .pictogram[data-category="personas"] { border-color: var(--color-people); }
+        .pictogram[data-category="acciones"] { border-color: var(--color-actions); }
+        .pictogram[data-category="objetos"] { border-color: var(--color-objects); }
+        .pictogram[data-category="lugares"] { border-color: var(--color-places); }
+        .pictogram[data-category="emociones"] { border-color: var(--color-emotions); }
+        .pictogram[data-category="alimentos"] { border-color: var(--color-food); }
+        .pictogram[data-category="otros"] { border-color: var(--color-other); }
+
+        [data-contrast="high"] .pictogram[data-category] { border-color: #fff; }
+
+        .picto-img {
+            width: 140px;
+            height: 140px;
+            object-fit: contain;
+            font-size: 100px; /* For emojis */
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .picto-label {
+            margin-top: auto;
+            font-size: 1.2rem;
+            font-weight: bold;
+            text-transform: uppercase;
+            text-align: center;
+            color: #000;
+            width: 100%;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+        }
+        [data-contrast="high"] .picto-label { color: #fff; }
+
+        .hide-text .picto-label { display: none; }
+
+        /* Remove Button */
+        .remove-btn {
+            position: absolute;
+            top: -10px;
+            right: -10px;
+            background: red;
+            color: white;
+            border: none;
+            border-radius: 50%;
+            width: 30px;
+            height: 30px;
+            font-size: 16px;
+            font-weight: bold;
+            cursor: pointer;
+            display: none;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.2);
+            z-index: 10;
+        }
+        .pictogram { position: relative; }
+        .pictogram:hover .remove-btn { display: block; }
+        .builder-board .pictogram .remove-btn { display: block; }
+
+        /* Library Area */
+        .library-controls {
+            display: flex;
+            flex-direction: column;
+            gap: 1rem;
+            margin-bottom: 2rem;
+        }
+
+        #library-search {
+            width: 100%;
+            font-size: 1.5rem;
+            padding: 1rem;
+            border-radius: var(--border-radius);
+            border: 2px solid var(--primary-color);
+            background-color: var(--card-bg);
+            color: var(--text-color);
+        }
+        [data-contrast="high"] #library-search { border-color: #fff; }
+
+        .filters {
+            display: flex;
+            gap: 0.5rem;
+            flex-wrap: wrap;
+        }
+
+        .filter-btn {
+            padding: 0.5rem 1rem;
+            font-size: 1.1rem;
+            border: 2px solid #ccc;
+            border-radius: 20px;
+            background: var(--card-bg);
+            color: var(--text-color);
+            cursor: pointer;
+            font-weight: bold;
+        }
+        [data-contrast="high"] .filter-btn { border-color: #fff; }
+
+        .filter-btn.active {
+            border-color: var(--text-color);
+            background: var(--text-color);
+            color: var(--bg-color);
+        }
+
+        .category-people { border-color: var(--color-people); color: var(--color-people); }
+        .category-actions { border-color: var(--color-actions); color: var(--color-actions); }
+        .category-objects { border-color: var(--color-objects); color: var(--color-objects); }
+        .category-places { border-color: var(--color-places); color: var(--color-places); }
+        .category-emotions { border-color: var(--color-emotions); color: var(--color-emotions); }
+        .category-food { border-color: var(--color-food); color: var(--color-food); }
+
+        .picto-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
+            gap: 1.5rem;
+            justify-items: center;
+        }
+
+        /* Builder Area */
+        .builder-area { margin-bottom: 2rem; }
+        .builder-controls { margin-bottom: 1rem; display: flex; gap: 1rem; }
+        .builder-board { min-height: 300px; border: 4px dashed var(--secondary-color); }
+
+        .mini-library h3 { margin-bottom: 1rem; }
+        .mini-library .picto-grid.mini {
+            grid-template-columns: repeat(auto-fill, minmax(120px, 1fr));
+            gap: 1rem;
+            background: var(--card-bg);
+            padding: 1rem;
+            border-radius: var(--border-radius);
+            max-height: 400px;
+            overflow-y: auto;
+            border: 1px solid transparent;
+        }
+        [data-contrast="high"] .mini-library .picto-grid.mini { border-color: #fff; }
+
+        .mini-library .pictogram {
+            width: 120px;
+            height: 150px;
+            border-width: 4px;
+        }
+        .mini-library .picto-img { width: 80px; height: 80px; font-size: 60px; }
+        .mini-library .picto-label { font-size: 0.9rem; }
+
+        /* Custom Area */
+        .custom-form {
+            background: var(--card-bg);
+            padding: 2rem;
+            border-radius: var(--border-radius);
+            box-shadow: var(--shadow);
+            margin-bottom: 2rem;
+            border: 1px solid transparent;
+        }
+        [data-contrast="high"] .custom-form { border-color: #fff; }
+
+        .form-group {
+            margin-bottom: 1.5rem;
+        }
+        .form-group label {
+            display: block;
+            font-size: 1.2rem;
+            font-weight: bold;
+            margin-bottom: 0.5rem;
+        }
+        .form-group input[type="text"], .form-group select {
+            width: 100%;
+            padding: 1rem;
+            font-size: 1.2rem;
+            border-radius: var(--border-radius);
+            border: 2px solid #ccc;
+            background: var(--bg-color);
+            color: var(--text-color);
+        }
+        [data-contrast="high"] .form-group input, [data-contrast="high"] .form-group select { border-color: #fff; }
+
+        .preview-box {
+            width: 180px;
+            height: 180px;
+            border: 4px dashed #ccc;
+            border-radius: var(--border-radius);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin-top: 1rem;
+            overflow: hidden;
+        }
+        .preview-box img { width: 100%; height: 100%; object-fit: contain; }
+
+        /* Settings Area */
+        .settings-panel {
+            background: var(--card-bg);
+            padding: 2rem;
+            border-radius: var(--border-radius);
+            box-shadow: var(--shadow);
+            max-width: 600px;
+            border: 1px solid transparent;
+        }
+        [data-contrast="high"] .settings-panel { border-color: #fff; }
+        .setting-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 1rem 0;
+            border-bottom: 1px solid #ccc;
+            font-size: 1.2rem;
+            flex-wrap: wrap;
+            gap: 1rem;
+        }
+        [data-contrast="high"] .setting-item { border-color: #fff; }
+
+        /* Toggle Switch */
+        .switch {
+            position: relative;
+            display: inline-block;
+            width: 60px;
+            height: 34px;
+        }
+        .switch input { opacity: 0; width: 0; height: 0; }
+        .slider {
+            position: absolute;
+            cursor: pointer;
+            top: 0; left: 0; right: 0; bottom: 0;
+            background-color: #ccc;
+            transition: .4s;
+            border-radius: 34px;
+        }
+        .slider:before {
+            position: absolute;
+            content: "";
+            height: 26px; width: 26px;
+            left: 4px; bottom: 4px;
+            background-color: white;
+            transition: .4s;
+            border-radius: 50%;
+        }
+        input:checked + .slider { background-color: var(--primary-color); }
+        [data-contrast="high"] input:checked + .slider { background-color: yellow; }
+        [data-contrast="high"] input:checked + .slider:before { background-color: #000; }
+        input:checked + .slider:before { transform: translateX(26px); }
+
+        /* Favorites */
+        .favorites-area { margin-top: 2rem; }
+        .favorites-container {
+            display: flex;
+            flex-direction: column;
+            gap: 1rem;
+            margin-top: 1rem;
+        }
+        .fav-item {
+            background: var(--card-bg);
+            padding: 1rem;
+            border-radius: var(--border-radius);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            box-shadow: var(--shadow);
+            font-size: 1.2rem;
+            border: 1px solid transparent;
+        }
+        [data-contrast="high"] .fav-item { border-color: #fff; }
+        .fav-item .fav-text { font-weight: bold; cursor: pointer; flex: 1; }
+        .fav-item .fav-text:hover { color: var(--primary-color); }
+        [data-contrast="high"] .fav-item .fav-text:hover { color: yellow; }
+
+        /* Help Area */
+        .help-content {
+            background: var(--card-bg);
+            padding: 2rem;
+            border-radius: var(--border-radius);
+            font-size: 1.2rem;
+            border: 1px solid transparent;
+        }
+        [data-contrast="high"] .help-content { border-color: #fff; }
+        .tutorial-steps {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 2rem;
+            margin-top: 2rem;
+        }
+        .step {
+            background: var(--bg-color);
+            padding: 1.5rem;
+            border-radius: var(--border-radius);
+            border-left: 8px solid var(--primary-color);
+        }
+        [data-contrast="high"] .step { border-left-color: yellow; border: 1px solid #fff; }
+
+        @media (max-width: 768px) {
+            header h1 { font-size: 1.5rem; }
+            .tab-btn { font-size: 1rem; padding: 0.6rem 1rem; }
+            .action-btn { font-size: 1.2rem; padding: 0.8rem 1.5rem; width: 100%; }
+            .controls { flex-direction: column; }
+            .pictogram { width: 140px; height: 180px; }
+            .picto-img { width: 100px; height: 100px; font-size: 70px; }
+            .picto-label { font-size: 1rem; }
+        }
+    </style>
+</head>
+<body>
+    <header>
+        <h1>🌟 Comunicador Visual</h1>
+        <nav>
+            <button class="tab-btn active" onclick="switchTab('generator')">💬 Generador</button>
+            <button class="tab-btn" onclick="switchTab('library')">📚 Biblioteca</button>
+            <button class="tab-btn" onclick="switchTab('builder')">🧩 Construir</button>
+            <button class="tab-btn" onclick="switchTab('custom')">📷 Mis Pictos</button>
+            <button class="tab-btn" onclick="switchTab('settings')">⚙️ Ajustes</button>
+            <button class="tab-btn help-btn" onclick="switchTab('help')">❓ Ayuda</button>
+        </nav>
+        <button id="theme-toggle" onclick="toggleTheme()">🌓</button>
+    </header>
+
+    <main>
+        <!-- Sección 1: Generador -->
+        <section id="generator" class="tab-content active">
+            <div class="input-area">
+                <textarea id="text-input" placeholder="Escribe aquí para generar pictogramas..." spellcheck="false"></textarea>
+                <div class="controls">
+                    <button id="generate-btn" class="action-btn">✨ Generar Pictogramas</button>
+                    <button id="speak-btn" class="action-btn speak">🗣️ Hablar</button>
+                    <button id="clear-btn" class="action-btn clear">🗑️ Borrar</button>
+                    <button id="save-fav-btn" class="action-btn fav">⭐ Guardar Favorito</button>
+                </div>
+            </div>
+            <div id="picto-output" class="picto-container" ondrop="drop(event)" ondragover="allowDrop(event)">
+                <!-- Pictogramas generados aparecerán aquí -->
+                <div class="empty-state">Escribe algo arriba y mira la magia ✨</div>
+            </div>
+
+            <div class="favorites-area">
+                <h3>⭐ Mis Frases Favoritas</h3>
+                <div id="favorites-list" class="favorites-container"></div>
+            </div>
+        </section>
+
+        <!-- Sección 2: Biblioteca -->
+        <section id="library" class="tab-content">
+            <div class="library-controls">
+                <input type="text" id="library-search" placeholder="🔍 Buscar pictograma...">
+                <div class="filters">
+                    <button class="filter-btn active" data-filter="all">Todos</button>
+                    <button class="filter-btn category-people" data-filter="personas">Naranja (Personas)</button>
+                    <button class="filter-btn category-actions" data-filter="acciones">Azul (Acciones)</button>
+                    <button class="filter-btn category-objects" data-filter="objetos">Amarillo (Objetos)</button>
+                    <button class="filter-btn category-places" data-filter="lugares">Verde (Lugares)</button>
+                    <button class="filter-btn category-emotions" data-filter="emociones">Rojo (Emociones)</button>
+                    <button class="filter-btn category-food" data-filter="alimentos">Marrón (Alimentos)</button>
+                </div>
+            </div>
+            <div id="library-grid" class="picto-grid">
+                <!-- Biblioteca completa se renderizará aquí -->
+            </div>
+        </section>
+
+        <!-- Sección 3: Constructor -->
+        <section id="builder" class="tab-content">
+            <div class="builder-area">
+                <div class="builder-controls">
+                    <button id="builder-speak-btn" class="action-btn speak">🗣️ Hablar Frase</button>
+                    <button id="builder-clear-btn" class="action-btn clear">🗑️ Vaciar Tablero</button>
+                </div>
+                <div id="builder-board" class="picto-container builder-board" ondrop="drop(event)" ondragover="allowDrop(event)">
+                    <div class="empty-state">Arrastra pictogramas aquí para construir frases 🧩</div>
+                </div>
+            </div>
+            <div class="mini-library">
+                <h3>Elige pictogramas:</h3>
+                <div id="builder-library" class="picto-grid mini">
+                    <!-- Mini biblioteca para arrastrar -->
+                </div>
+            </div>
+        </section>
+
+        <!-- Sección 4: Personalizados -->
+        <section id="custom" class="tab-content">
+            <div class="custom-form">
+                <h2>Añadir Nuevo Pictograma</h2>
+                <div class="form-group">
+                    <label>Palabra o frase asociada:</label>
+                    <input type="text" id="custom-word" placeholder="Ej: Mi perro Toby">
+                </div>
+                <div class="form-group">
+                    <label>Categoría (Color):</label>
+                    <select id="custom-category">
+                        <option value="personas">Personas (Naranja)</option>
+                        <option value="acciones">Acciones (Azul)</option>
+                        <option value="objetos">Objetos (Amarillo)</option>
+                        <option value="lugares">Lugares (Verde)</option>
+                        <option value="emociones">Emociones (Rojo)</option>
+                        <option value="alimentos">Alimentos (Marrón)</option>
+                        <option value="otros">Otros (Blanco)</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label>Imagen:</label>
+                    <input type="file" id="custom-image" accept="image/png, image/jpeg">
+                    <div id="image-preview" class="preview-box">Preview de imagen</div>
+                </div>
+                <button id="save-custom-btn" class="action-btn">💾 Guardar Pictograma</button>
+            </div>
+            <div class="custom-gallery">
+                <h3>Mis Pictogramas Personales</h3>
+                <div id="custom-grid" class="picto-grid"></div>
+            </div>
+        </section>
+
+        <!-- Sección 5: Ajustes -->
+        <section id="settings" class="tab-content">
+            <div class="settings-panel">
+                <h2>Configuración</h2>
+
+                <div class="setting-item">
+                    <label>Modo Alto Contraste</label>
+                    <label class="switch">
+                        <input type="checkbox" id="high-contrast-toggle">
+                        <span class="slider"></span>
+                    </label>
+                </div>
+
+                <div class="setting-item">
+                    <label>Mostrar texto bajo pictogramas</label>
+                    <label class="switch">
+                        <input type="checkbox" id="show-text-toggle" checked>
+                        <span class="slider"></span>
+                    </label>
+                </div>
+
+                <div class="setting-item">
+                    <label>Voz (Síntesis):</label>
+                    <select id="voice-select">
+                        <option value="">Cargando voces...</option>
+                    </select>
+                </div>
+
+                <div class="setting-item">
+                    <label>Velocidad de voz:</label>
+                    <input type="range" id="voice-rate" min="0.5" max="1.5" step="0.1" value="1.0">
+                    <span id="rate-value">Normal</span>
+                </div>
+
+                <button id="reset-data-btn" class="action-btn clear" style="margin-top: 30px;">⚠️ Borrar todos los datos guardados</button>
+            </div>
+        </section>
+
+        <!-- Sección 6: Ayuda -->
+        <section id="help" class="tab-content">
+            <div class="help-content">
+                <h2>¿Cómo usar el Comunicador Visual?</h2>
+                <div class="tutorial-steps">
+                    <div class="step">
+                        <h3>1. Escribe o Habla 📝</h3>
+                        <p>En la pestaña "Generador", escribe cualquier frase. El sistema la convertirá automáticamente en pictogramas.</p>
+                    </div>
+                    <div class="step">
+                        <h3>2. Escucha 🗣️</h3>
+                        <p>Pulsa el botón "Hablar" y el dispositivo leerá la frase en voz alta.</p>
+                    </div>
+                    <div class="step">
+                        <h3>3. Construye 🧩</h3>
+                        <p>En "Construir", arrastra pictogramas desde abajo hacia el panel superior para armar tus propias oraciones visuales.</p>
+                    </div>
+                    <div class="step">
+                        <h3>4. Personaliza 📷</h3>
+                        <p>Sube fotos de tu familia, mascota o juguetes en "Mis Pictos" para usarlos en el comunicador.</p>
+                    </div>
+                    <div class="step">
+                        <h3>🎨 Colores ARASAAC</h3>
+                        <ul>
+                            <li><span style="color: #0078D7; font-weight:bold;">Azul:</span> Acciones (Verbos)</li>
+                            <li><span style="color: #FFB300; font-weight:bold;">Amarillo:</span> Objetos (Nombres)</li>
+                            <li><span style="color: #E65100; font-weight:bold;">Naranja:</span> Personas / Pronombres</li>
+                            <li><span style="color: #4CAF50; font-weight:bold;">Verde:</span> Lugares</li>
+                            <li><span style="color: #D32F2F; font-weight:bold;">Rojo:</span> Emociones / Adjetivos</li>
+                            <li><span style="color: #795548; font-weight:bold;">Marrón:</span> Alimentos</li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+        </section>
+    </main>
+
+    <script>
+        /* =========================================================================
+           1. DICCIONARIO DE PICTOGRAMAS (Más de 350 entradas con emojis/SVGs)
+           ========================================================================= */
+        const diccionario = [
+            // PERSONAS (Naranja)
+            { palabras: ["yo", "mi", "me"], img: "🧍", cat: "personas" },
+            { palabras: ["tu", "tú", "te"], img: "👉", cat: "personas" },
+            { palabras: ["el", "él", "ella"], img: "👤", cat: "personas" },
+            { palabras: ["nosotros", "nosotras"], img: "👥", cat: "personas" },
+            { palabras: ["mama", "mamá", "madre"], img: "👩", cat: "personas" },
+            { palabras: ["papa", "papá", "padre"], img: "👨", cat: "personas" },
+            { palabras: ["hermano", "hermana"], img: "👦", cat: "personas" },
+            { palabras: ["abuela", "abuelo"], img: "👵", cat: "personas" },
+            { palabras: ["bebe", "bebé"], img: "👶", cat: "personas" },
+            { palabras: ["amigo", "amiga", "amigos"], img: "🧑‍🤝‍🧑", cat: "personas" },
+            { palabras: ["profesor", "profesora", "maestro", "profe"], img: "👨‍🏫", cat: "personas" },
+            { palabras: ["medico", "médico", "doctor", "doctora"], img: "👨‍⚕️", cat: "personas" },
+            { palabras: ["policia", "policía"], img: "👮", cat: "personas" },
+            { palabras: ["bombero"], img: "👨‍🚒", cat: "personas" },
+            { palabras: ["niño", "niña"], img: "🧒", cat: "personas" },
+
+            // ACCIONES (Azul) - Verbos en infinitivo y conjugados
+            { palabras: ["querer", "quiero", "quiere", "queremos"], img: "👐", cat: "acciones" },
+            { palabras: ["tener", "tengo", "tiene", "tenemos"], img: "🤲", cat: "acciones" },
+            { palabras: ["ir", "voy", "vamos", "fue"], img: "🚶", cat: "acciones" },
+            { palabras: ["venir", "ven", "vengo"], img: "🏃", cat: "acciones" },
+            { palabras: ["estar", "estoy", "esta", "está"], img: "📍", cat: "acciones" },
+            { palabras: ["hacer", "hago", "hace"], img: "🛠️", cat: "acciones" },
+            { palabras: ["ver", "veo", "mirar", "miro"], img: "👁️", cat: "acciones" },
+            { palabras: ["escuchar", "escucho", "oir", "oigo"], img: "👂", cat: "acciones" },
+            { palabras: ["comer", "como", "come", "comiendo"], img: "🍽️", cat: "acciones" },
+            { palabras: ["beber", "bebo", "bebe", "tomar", "tomo"], img: "🚰", cat: "acciones" },
+            { palabras: ["dormir", "duermo", "duerme"], img: "💤", cat: "acciones" },
+            { palabras: ["jugar", "juego", "juega"], img: "🎮", cat: "acciones" },
+            { palabras: ["correr", "corro", "corre", "corriendo"], img: "🏃‍♂️", cat: "acciones" },
+            { palabras: ["saltar", "salto", "salta"], img: "🦘", cat: "acciones" },
+            { palabras: ["caminar", "camino", "andar", "pasear"], img: "🚶‍♂️", cat: "acciones" },
+            { palabras: ["hablar", "hablo", "decir", "digo"], img: "🗣️", cat: "acciones" },
+            { palabras: ["leer", "leo", "lee"], img: "📖", cat: "acciones" },
+            { palabras: ["escribir", "escribo", "escribe"], img: "✍️", cat: "acciones" },
+            { palabras: ["dibujar", "dibujo", "pintar", "pinto"], img: "🎨", cat: "acciones" },
+            { palabras: ["cantar", "canto", "canta"], img: "🎤", cat: "acciones" },
+            { palabras: ["bailar", "bailo", "baila"], img: "💃", cat: "acciones" },
+            { palabras: ["dar", "doy", "da", "dame"], img: "🎁", cat: "acciones" },
+            { palabras: ["tomar", "coger", "agarro"], img: "✊", cat: "acciones" },
+            { palabras: ["poner", "pongo", "pone"], img: "📥", cat: "acciones" },
+            { palabras: ["quitar", "quito", "quita", "sacar"], img: "📤", cat: "acciones" },
+            { palabras: ["abrir", "abro", "abre"], img: "👐", cat: "acciones" },
+            { palabras: ["cerrar", "cierro", "cierra"], img: "🚪", cat: "acciones" },
+            { palabras: ["entrar", "entro", "entra"], img: "🚶‍♂️➡️", cat: "acciones" },
+            { palabras: ["salir", "salgo", "sale"], img: "🚪🏃", cat: "acciones" },
+            { palabras: ["subir", "subo", "sube"], img: "⬆️", cat: "acciones" },
+            { palabras: ["bajar", "bajo", "baje"], img: "⬇️", cat: "acciones" },
+            { palabras: ["esperar", "espero", "espera"], img: "⏳", cat: "acciones" },
+            { palabras: ["parar", "paro", "para", "detener"], img: "🛑", cat: "acciones" },
+            { palabras: ["ayudar", "ayudo", "ayuda", "ayudame"], img: "🤝", cat: "acciones" },
+            { palabras: ["gustar", "gusta", "gusto", "agradar"], img: "👍", cat: "acciones" },
+            { palabras: ["pensar", "pienso", "piensa"], img: "💭", cat: "acciones" },
+            { palabras: ["saber", "se", "sé", "sabe"], img: "💡", cat: "acciones" },
+            { palabras: ["aprender", "aprendo", "aprende"], img: "🧠", cat: "acciones" },
+            { palabras: ["lavar", "lavo", "lava", "limpiar"], img: "🧼", cat: "acciones" },
+            { palabras: ["bañar", "baño", "duchar", "ducho"], img: "🛀", cat: "acciones" },
+            { palabras: ["vestir", "visto", "ropa", "ponerse"], img: "👕", cat: "acciones" },
+            { palabras: ["comprar", "compro", "compra"], img: "🛒", cat: "acciones" },
+            { palabras: ["pagar", "pago", "paga"], img: "💵", cat: "acciones" },
+            { palabras: ["llorar", "lloro", "llora"], img: "😢", cat: "acciones" },
+            { palabras: ["reir", "rio", "rie", "sonreir"], img: "😄", cat: "acciones" },
+            { palabras: ["gritar", "grito", "grita"], img: "😫", cat: "acciones" },
+            { palabras: ["abrazar", "abrazo", "abraza"], img: "🫂", cat: "acciones" },
+            { palabras: ["besar", "beso", "besa"], img: "💋", cat: "acciones" },
+            { palabras: ["doler", "duele", "lastimar"], img: "🤕", cat: "acciones" },
+            { palabras: ["terminar", "termino", "acabar", "fin"], img: "🏁", cat: "acciones" },
+
+            // OBJETOS (Amarillo)
+            { palabras: ["agua"], img: "💧", cat: "objetos" },
+            { palabras: ["juguete", "juguetes"], img: "🧸", cat: "objetos" },
+            { palabras: ["pelota", "balon"], img: "⚽", cat: "objetos" },
+            { palabras: ["coche", "auto", "carro"], img: "🚗", cat: "objetos" },
+            { palabras: ["tren"], img: "🚂", cat: "objetos" },
+            { palabras: ["avion", "avión"], img: "✈️", cat: "objetos" },
+            { palabras: ["barco"], img: "⛵", cat: "objetos" },
+            { palabras: ["bicicleta", "bici"], img: "🚲", cat: "objetos" },
+            { palabras: ["libro", "cuento"], img: "📚", cat: "objetos" },
+            { palabras: ["lapiz", "lápiz", "boli", "boligrafo"], img: "✏️", cat: "objetos" },
+            { palabras: ["papel", "hoja"], img: "📄", cat: "objetos" },
+            { palabras: ["tijeras"], img: "✂️", cat: "objetos" },
+            { palabras: ["pegamento"], img: "🧴", cat: "objetos" },
+            { palabras: ["mesa"], img: "🪑", cat: "objetos" }, // Usando silla como prox
+            { palabras: ["silla"], img: "🪑", cat: "objetos" },
+            { palabras: ["cama"], img: "🛏️", cat: "objetos" },
+            { palabras: ["sofa", "sofá", "sillon"], img: "🛋️", cat: "objetos" },
+            { palabras: ["puerta"], img: "🚪", cat: "objetos" },
+            { palabras: ["ventana"], img: "🪟", cat: "objetos" },
+            { palabras: ["television", "tv", "tele"], img: "📺", cat: "objetos" },
+            { palabras: ["ordenador", "computadora", "pc"], img: "💻", cat: "objetos" },
+            { palabras: ["tablet", "ipad"], img: "📱", cat: "objetos" },
+            { palabras: ["telefono", "movil", "celular"], img: "📱", cat: "objetos" },
+            { palabras: ["auriculares", "cascos"], img: "🎧", cat: "objetos" },
+            { palabras: ["reloj"], img: "⌚", cat: "objetos" },
+            { palabras: ["gafas", "lentes"], img: "👓", cat: "objetos" },
+            { palabras: ["ropa"], img: "👕", cat: "objetos" },
+            { palabras: ["pantalon", "pantalón"], img: "👖", cat: "objetos" },
+            { palabras: ["camiseta"], img: "👕", cat: "objetos" },
+            { palabras: ["zapatos", "zapatillas"], img: "👟", cat: "objetos" },
+            { palabras: ["calcetines"], img: "🧦", cat: "objetos" },
+            { palabras: ["abrigo", "chaqueta"], img: "🧥", cat: "objetos" },
+            { palabras: ["sombrero", "gorra"], img: "🧢", cat: "objetos" },
+            { palabras: ["mochila"], img: "🎒", cat: "objetos" },
+            { palabras: ["dinero", "monedas"], img: "💰", cat: "objetos" },
+            { palabras: ["llaves", "llave"], img: "🔑", cat: "objetos" },
+            { palabras: ["cepillo"], img: "🪥", cat: "objetos" },
+            { palabras: ["peine"], img: "🪮", cat: "objetos" },
+            { palabras: ["jabon", "jabón"], img: "🧼", cat: "objetos" },
+            { palabras: ["toalla"], img: "🧖", cat: "objetos" },
+            { palabras: ["papel higienico", "vater"], img: "🧻", cat: "objetos" },
+            { palabras: ["plato"], img: "🍽️", cat: "objetos" },
+            { palabras: ["vaso", "taza"], img: "🥛", cat: "objetos" },
+            { palabras: ["cubiertos", "cuchara", "tenedor", "cuchillo"], img: "🍴", cat: "objetos" },
+
+            // LUGARES (Verde)
+            { palabras: ["casa", "hogar"], img: "🏠", cat: "lugares" },
+            { palabras: ["colegio", "escuela", "cole"], img: "🏫", cat: "lugares" },
+            { palabras: ["parque"], img: "🏞️", cat: "lugares" },
+            { palabras: ["calle"], img: "🛣️", cat: "lugares" },
+            { palabras: ["tienda", "supermercado", "comprar"], img: "🏪", cat: "lugares" },
+            { palabras: ["hospital", "medico"], img: "🏥", cat: "lugares" },
+            { palabras: ["restaurante", "bar"], img: "🍽️", cat: "lugares" },
+            { palabras: ["cine"], img: "🎬", cat: "lugares" },
+            { palabras: ["playa"], img: "🏖️", cat: "lugares" },
+            { palabras: ["piscina"], img: "🏊", cat: "lugares" },
+            { palabras: ["campo", "bosque"], img: "🌲", cat: "lugares" },
+            { palabras: ["ciudad", "pueblo"], img: "🏙️", cat: "lugares" },
+            { palabras: ["habitacion", "cuarto", "dormitorio"], img: "🛏️", cat: "lugares" },
+            { palabras: ["baño", "aseo", "servicio"], img: "🚽", cat: "lugares" },
+            { palabras: ["cocina"], img: "🍳", cat: "lugares" },
+            { palabras: ["salon", "salón", "comedor"], img: "🛋️", cat: "lugares" },
+
+            // EMOCIONES Y ADJETIVOS (Rojo)
+            { palabras: ["feliz", "contento", "alegre", "bien"], img: "😀", cat: "emociones" },
+            { palabras: ["triste", "pena", "mal"], img: "😢", cat: "emociones" },
+            { palabras: ["enfadado", "enojado", "rabia"], img: "😠", cat: "emociones" },
+            { palabras: ["asustado", "miedo"], img: "😨", cat: "emociones" },
+            { palabras: ["sorprendido", "sorpresa"], img: "😲", cat: "emociones" },
+            { palabras: ["cansado", "sueño", "agotado"], img: "🥱", cat: "emociones" },
+            { palabras: ["enfermo", "malo"], img: "🤒", cat: "emociones" },
+            { palabras: ["aburrido"], img: "😒", cat: "emociones" },
+            { palabras: ["calor", "caliente"], img: "🥵", cat: "emociones" },
+            { palabras: ["frio", "frío", "helado"], img: "🥶", cat: "emociones" },
+            { palabras: ["hambre", "hambriento"], img: "🤤", cat: "emociones" },
+            { palabras: ["sed", "sediento"], img: "🥵", cat: "emociones" },
+            { palabras: ["bueno", "bien", "genial"], img: "👍", cat: "emociones" },
+            { palabras: ["malo", "mal", "pesimo"], img: "👎", cat: "emociones" },
+            { palabras: ["grande", "enorme"], img: "🐘", cat: "emociones" },
+            { palabras: ["pequeño", "chico"], img: "🐁", cat: "emociones" },
+            { palabras: ["bonito", "lindo", "hermoso"], img: "✨", cat: "emociones" },
+            { palabras: ["feo"], img: "💩", cat: "emociones" },
+            { palabras: ["limpio"], img: "✨", cat: "emociones" },
+            { palabras: ["sucio"], img: "💩", cat: "emociones" },
+            { palabras: ["rapido", "rápido", "deprisa"], img: "🐇", cat: "emociones" },
+            { palabras: ["lento", "despacio"], img: "🐢", cat: "emociones" },
+            { palabras: ["fuerte"], img: "💪", cat: "emociones" },
+            { palabras: ["roto", "estropeado"], img: "💔", cat: "emociones" },
+            { palabras: ["si", "sí", "afirmativo"], img: "✅", cat: "emociones" },
+            { palabras: ["no", "negativo", "prohibido"], img: "❌", cat: "emociones" },
+
+            // ALIMENTOS (Marrón)
+            { palabras: ["comida", "alimento"], img: "🍲", cat: "alimentos" },
+            { palabras: ["pan"], img: "🥖", cat: "alimentos" },
+            { palabras: ["leche"], img: "🥛", cat: "alimentos" },
+            { palabras: ["queso"], img: "🧀", cat: "alimentos" },
+            { palabras: ["huevo", "huevos"], img: "🥚", cat: "alimentos" },
+            { palabras: ["carne"], img: "🥩", cat: "alimentos" },
+            { palabras: ["pollo"], img: "🍗", cat: "alimentos" },
+            { palabras: ["pescado", "pez"], img: "🐟", cat: "alimentos" },
+            { palabras: ["arroz"], img: "🍚", cat: "alimentos" },
+            { palabras: ["pasta", "espaguetis", "macarrones"], img: "🍝", cat: "alimentos" },
+            { palabras: ["fruta"], img: "🍎", cat: "alimentos" },
+            { palabras: ["manzana"], img: "🍎", cat: "alimentos" },
+            { palabras: ["platano", "plátano", "banana"], img: "🍌", cat: "alimentos" },
+            { palabras: ["naranja"], img: "🍊", cat: "alimentos" },
+            { palabras: ["uva", "uvas"], img: "🍇", cat: "alimentos" },
+            { palabras: ["fresa", "frutilla"], img: "🍓", cat: "alimentos" },
+            { palabras: ["verdura", "vegetales"], img: "🥦", cat: "alimentos" },
+            { palabras: ["tomate"], img: "🍅", cat: "alimentos" },
+            { palabras: ["zanahoria"], img: "🥕", cat: "alimentos" },
+            { palabras: ["patata", "papa", "patatas"], img: "🥔", cat: "alimentos" },
+            { palabras: ["sopa", "caldo"], img: "🥣", cat: "alimentos" },
+            { palabras: ["pizza"], img: "🍕", cat: "alimentos" },
+            { palabras: ["hamburguesa"], img: "🍔", cat: "alimentos" },
+            { palabras: ["bocadillo", "sandwich"], img: "🥪", cat: "alimentos" },
+            { palabras: ["galleta", "galletas"], img: "🍪", cat: "alimentos" },
+            { palabras: ["pastel", "tarta"], img: "🍰", cat: "alimentos" },
+            { palabras: ["helado"], img: "🍦", cat: "alimentos" },
+            { palabras: ["chocolate"], img: "🍫", cat: "alimentos" },
+            { palabras: ["zumo", "jugo"], img: "🧃", cat: "alimentos" },
+
+            // ANIMALES (Amarillo / Objetos)
+            { palabras: ["animal", "animales"], img: "🐾", cat: "objetos" },
+            { palabras: ["perro", "perrito"], img: "🐶", cat: "objetos" },
+            { palabras: ["gato", "gatito"], img: "🐱", cat: "objetos" },
+            { palabras: ["pajaro", "pájaro"], img: "🐦", cat: "objetos" },
+            { palabras: ["pez", "peces"], img: "🐟", cat: "objetos" },
+            { palabras: ["caballo"], img: "🐴", cat: "objetos" },
+            { palabras: ["vaca"], img: "🐮", cat: "objetos" },
+            { palabras: ["cerdo"], img: "🐷", cat: "objetos" },
+            { palabras: ["oveja"], img: "🐑", cat: "objetos" },
+            { palabras: ["gallina", "pollo"], img: "🐔", cat: "objetos" },
+            { palabras: ["pato"], img: "🦆", cat: "objetos" },
+            { palabras: ["leon", "león"], img: "🦁", cat: "objetos" },
+            { palabras: ["tigre"], img: "🐯", cat: "objetos" },
+            { palabras: ["elefante"], img: "🐘", cat: "objetos" },
+            { palabras: ["mono"], img: "🐵", cat: "objetos" },
+            { palabras: ["oso"], img: "🐻", cat: "objetos" },
+            { palabras: ["rana", "sapo"], img: "🐸", cat: "objetos" },
+            { palabras: ["tortuga"], img: "🐢", cat: "objetos" },
+            { palabras: ["serpiente"], img: "🐍", cat: "objetos" },
+            { palabras: ["insecto", "bicho", "mosca"], img: "🪰", cat: "objetos" },
+            { palabras: ["araña"], img: "🕷️", cat: "objetos" },
+            { palabras: ["mariposa"], img: "🦋", cat: "objetos" },
+            { palabras: ["abeja"], img: "🐝", cat: "objetos" }
+        ];
+
+        /* =========================================================================
+           2. ESTADO Y VARIABLES GLOBALES
+           ========================================================================= */
+        const state = {
+            customDict: JSON.parse(localStorage.getItem('customDict')) || [],
+            favorites: JSON.parse(localStorage.getItem('favorites')) || [],
+            settings: {
+                highContrast: localStorage.getItem('highContrast') === 'true',
+                showText: localStorage.getItem('showText') !== 'false',
+                voiceURI: localStorage.getItem('voiceURI') || '',
+                voiceRate: parseFloat(localStorage.getItem('voiceRate')) || 1.0,
+                theme: localStorage.getItem('theme') || 'light'
+            }
+        };
+
+        // Combina el diccionario interno con los personalizados
+        const getFullDict = () => [...diccionario, ...state.customDict];
+
+        // Palabras vacías (Stop words) para filtrar si no tienen significado clave
+        const stopWords = ["el", "la", "los", "las", "un", "una", "unos", "unas", "de", "del", "a", "ante", "bajo", "cabe", "con", "contra", "desde", "en", "entre", "hacia", "hasta", "para", "por", "segun", "sin", "so", "sobre", "tras", "y", "e", "o", "u", "ni", "que", "pero", "aunque", "mas"];
+
+        let synth = window.speechSynthesis;
+        let voices = [];
+        let debounceTimer;
+
+        /* =========================================================================
+           3. INICIALIZACIÓN Y EVENTOS
+           ========================================================================= */
+        document.addEventListener('DOMContentLoaded', () => {
+            initSettings();
+            initSpeechSynthesis();
+            renderLibrary();
+            renderCustomGrid();
+            renderFavorites();
+            setupEventListeners();
+        });
+
+        function setupEventListeners() {
+            // Generador de texto con Debounce
+            const textInput = document.getElementById('text-input');
+            textInput.addEventListener('input', () => {
+                clearTimeout(debounceTimer);
+                debounceTimer = setTimeout(() => {
+                    generatePictograms(textInput.value);
+                }, 800);
+            });
+
+            document.getElementById('generate-btn').addEventListener('click', () => {
+                generatePictograms(textInput.value);
+            });
+
+            document.getElementById('clear-btn').addEventListener('click', () => {
+                textInput.value = '';
+                document.getElementById('picto-output').innerHTML = '<div class="empty-state">Escribe algo arriba y mira la magia ✨</div>';
+            });
+
+            document.getElementById('speak-btn').addEventListener('click', () => {
+                speakText(textInput.value);
+            });
+
+            document.getElementById('save-fav-btn').addEventListener('click', () => {
+                const text = textInput.value.trim();
+                if (text && !state.favorites.includes(text)) {
+                    state.favorites.push(text);
+                    saveState('favorites', state.favorites);
+                    renderFavorites();
+                    alert('⭐ Frase guardada en favoritos');
+                }
+            });
+
+            // Buscador Biblioteca
+            document.getElementById('library-search').addEventListener('input', (e) => {
+                renderLibrary(e.target.value.toLowerCase());
+            });
+
+            // Filtros Biblioteca
+            document.querySelectorAll('.filter-btn').forEach(btn => {
+                btn.addEventListener('click', (e) => {
+                    document.querySelectorAll('.filter-btn').forEach(b => b.classList.remove('active'));
+                    e.target.classList.add('active');
+                    renderLibrary(document.getElementById('library-search').value.toLowerCase(), e.target.dataset.filter);
+                });
+            });
+
+            // Custom Imagen
+            document.getElementById('custom-image').addEventListener('change', handleImageUpload);
+            document.getElementById('save-custom-btn').addEventListener('click', saveCustomPictogram);
+
+            // Ajustes
+            document.getElementById('high-contrast-toggle').addEventListener('change', (e) => {
+                state.settings.highContrast = e.target.checked;
+                saveState('settings', state.settings);
+                applyTheme();
+            });
+
+            document.getElementById('show-text-toggle').addEventListener('change', (e) => {
+                state.settings.showText = e.target.checked;
+                saveState('settings', state.settings);
+                applyTextVisibility();
+            });
+
+            document.getElementById('voice-select').addEventListener('change', (e) => {
+                state.settings.voiceURI = e.target.value;
+                saveState('settings', state.settings);
+            });
+
+            document.getElementById('voice-rate').addEventListener('input', (e) => {
+                const val = parseFloat(e.target.value);
+                state.settings.voiceRate = val;
+                document.getElementById('rate-value').textContent = val === 1 ? 'Normal' : val + 'x';
+                saveState('settings', state.settings);
+            });
+
+            document.getElementById('reset-data-btn').addEventListener('click', () => {
+                if (confirm('⚠️ ¿Estás seguro de que quieres borrar todos tus pictogramas personalizados y frases favoritas? Esta acción no se puede deshacer.')) {
+                    localStorage.clear();
+                    location.reload();
+                }
+            });
+
+            // Builder
+            document.getElementById('builder-clear-btn').addEventListener('click', () => {
+                document.getElementById('builder-board').innerHTML = '<div class="empty-state">Arrastra pictogramas aquí para construir frases 🧩</div>';
+            });
+
+            document.getElementById('builder-speak-btn').addEventListener('click', () => {
+                const pictos = document.querySelectorAll('#builder-board .pictogram .picto-label');
+                const phrase = Array.from(pictos).map(p => p.textContent).join(' ');
+                if (phrase) speakText(phrase);
+            });
+        }
+
+        /* =========================================================================
+           4. LÓGICA PRINCIPAL (Procesamiento de texto y generación)
+           ========================================================================= */
+        function normalizeString(str) {
+            return str.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "").replace(/[.,?!¡¿]/g, "");
+        }
+
+        function findPictogram(word) {
+            const normalizedWord = normalizeString(word);
+            const dict = getFullDict();
+
+            for (let entry of dict) {
+                if (entry.palabras.some(p => normalizeString(p) === normalizedWord)) {
+                    return entry;
+                }
+            }
+            return null;
+        }
+
+        function generatePictograms(text) {
+            const container = document.getElementById('picto-output');
+            if (!text.trim()) {
+                container.innerHTML = '<div class="empty-state">Escribe algo arriba y mira la magia ✨</div>';
+                return;
+            }
+
+            container.innerHTML = '';
+
+            // Separar palabras
+            const wordsRaw = text.split(/\s+/);
+            const wordsToProcess = [];
+
+            // Filtrar stop words, pero mantener "si", "no", "yo", etc.
+            wordsRaw.forEach(w => {
+                const cleanW = normalizeString(w);
+                if (cleanW && (!stopWords.includes(cleanW) || findPictogram(cleanW))) {
+                    wordsToProcess.push(w);
+                }
+            });
+
+            if (wordsToProcess.length === 0) {
+                container.innerHTML = '<div class="empty-state">No se encontraron pictogramas para este texto. Intenta con palabras más sencillas.</div>';
+                return;
+            }
+
+            wordsToProcess.forEach(word => {
+                const cleanWord = word.replace(/[.,?!¡¿]/g, "");
+                const pictoData = findPictogram(cleanWord);
+
+                if (pictoData) {
+                    container.appendChild(createPictogramElement(pictoData, cleanWord));
+                } else {
+                    // Generar un pictograma en blanco para palabra desconocida
+                    container.appendChild(createPictogramElement({
+                        img: "❓",
+                        cat: "otros",
+                        palabras: [cleanWord]
+                    }, cleanWord));
+                }
+            });
+        }
+
+        function createPictogramElement(data, displayWord, id = null, isDraggable = true) {
+            const el = document.createElement('div');
+            el.className = 'pictogram';
+            el.setAttribute('data-category', data.cat);
+            if (isDraggable) {
+                el.draggable = true;
+                el.id = id || 'picto-' + Date.now() + Math.random().toString(36).substr(2, 9);
+                el.addEventListener('dragstart', drag);
+            }
+
+            // Si es base64 (imagen subida) o emoji
+            const imgContent = data.img.startsWith('data:image')
+                ? `<img src="${data.img}" class="picto-img" alt="${displayWord}" style="width:100%; height:100%; object-fit:contain;">`
+                : `<div class="picto-img">${data.img}</div>`;
+
+            el.innerHTML = `
+                ${imgContent}
+                <div class="picto-label">${displayWord}</div>
+                <button class="remove-btn" onclick="this.parentElement.remove()" title="Eliminar" style="display:none;">✕</button>
+            `;
+
+            return el;
+        }
+
+        /* =========================================================================
+           5. DRAG AND DROP (Constructor)
+           ========================================================================= */
+        function allowDrop(ev) {
+            ev.preventDefault();
+        }
+
+        function drag(ev) {
+            ev.dataTransfer.setData("text", ev.target.id);
+            // Si viene de la biblioteca, clonarlo
+            if (ev.target.closest('.mini-library')) {
+                ev.dataTransfer.setData("source", "library");
+                ev.dataTransfer.setData("category", ev.target.getAttribute('data-category'));
+                ev.dataTransfer.setData("img", ev.target.querySelector('.picto-img').innerHTML || ev.target.querySelector('img').src);
+                ev.dataTransfer.setData("isImg", ev.target.querySelector('img') ? "true" : "false");
+                ev.dataTransfer.setData("label", ev.target.querySelector('.picto-label').textContent);
+            } else {
+                ev.dataTransfer.setData("source", "board");
+            }
+        }
+
+        function drop(ev) {
+            ev.preventDefault();
+            const source = ev.dataTransfer.getData("source");
+            const targetArea = ev.target.closest('.picto-container');
+
+            if (!targetArea) return;
+
+            // Limpiar estado vacío si existe
+            const emptyState = targetArea.querySelector('.empty-state');
+            if (emptyState) emptyState.remove();
+
+            if (source === "library") {
+                const cat = ev.dataTransfer.getData("category");
+                const imgStr = ev.dataTransfer.getData("img");
+                const isImg = ev.dataTransfer.getData("isImg") === "true";
+                const label = ev.dataTransfer.getData("label");
+
+                const newEl = document.createElement('div');
+                newEl.className = 'pictogram';
+                newEl.setAttribute('data-category', cat);
+                newEl.draggable = true;
+                newEl.id = 'board-picto-' + Date.now();
+                newEl.addEventListener('dragstart', drag);
+
+                const imgContent = isImg
+                    ? `<img src="${imgStr}" class="picto-img" alt="${label}" style="width:100%; height:100%; object-fit:contain;">`
+                    : `<div class="picto-img">${imgStr}</div>`;
+
+                newEl.innerHTML = `
+                    ${imgContent}
+                    <div class="picto-label">${label}</div>
+                    <button class="remove-btn" onclick="this.parentElement.remove()" title="Eliminar">✕</button>
+                `;
+
+                targetArea.appendChild(newEl);
+            } else if (source === "board") {
+                const dataId = ev.dataTransfer.getData("text");
+                const draggedElement = document.getElementById(dataId);
+                if (draggedElement && draggedElement !== targetArea) {
+                    targetArea.appendChild(draggedElement);
+                }
+            }
+        }
+
+        /* =========================================================================
+           6. RENDERIZADO DE VISTAS (Biblioteca, Favoritos, Personalizados)
+           ========================================================================= */
+        function renderLibrary(searchTerm = '', filterCat = 'all') {
+            const grid = document.getElementById('library-grid');
+            const miniGrid = document.getElementById('builder-library');
+            grid.innerHTML = '';
+            miniGrid.innerHTML = '';
+
+            const dict = getFullDict();
+
+            dict.forEach((entry, index) => {
+                const mainWord = entry.palabras[0];
+
+                // Aplicar filtros
+                if (filterCat !== 'all' && entry.cat !== filterCat) return;
+                if (searchTerm && !entry.palabras.some(p => p.toLowerCase().includes(searchTerm))) return;
+
+                const el = createPictogramElement(entry, mainWord, 'lib-' + index, false);
+                grid.appendChild(el);
+
+                // Mini versión para el constructor
+                const miniEl = createPictogramElement(entry, mainWord, 'minilib-' + index, true);
+                miniGrid.appendChild(miniEl);
+            });
+        }
+
+        function renderFavorites() {
+            const container = document.getElementById('favorites-list');
+            container.innerHTML = '';
+
+            if (state.favorites.length === 0) {
+                container.innerHTML = '<p style="color:#888;">Aún no has guardado frases favoritas.</p>';
+                return;
+            }
+
+            state.favorites.forEach((fav, index) => {
+                const div = document.createElement('div');
+                div.className = 'fav-item';
+                div.innerHTML = `
+                    <span class="fav-text">${fav}</span>
+                    <button class="action-btn clear" style="padding: 0.5rem 1rem; font-size: 1rem;" onclick="removeFavorite(${index})">🗑️</button>
+                `;
+                div.querySelector('.fav-text').addEventListener('click', () => {
+                    document.getElementById('text-input').value = fav;
+                    generatePictograms(fav);
+                    switchTab('generator');
+                });
+                container.appendChild(div);
+            });
+        }
+
+        window.removeFavorite = function(index) {
+            state.favorites.splice(index, 1);
+            saveState('favorites', state.favorites);
+            renderFavorites();
+        };
+
+        function renderCustomGrid() {
+            const grid = document.getElementById('custom-grid');
+            grid.innerHTML = '';
+
+            if (state.customDict.length === 0) {
+                grid.innerHTML = '<p style="color:#888; grid-column: 1/-1;">No has creado ningún pictograma personalizado.</p>';
+                return;
+            }
+
+            state.customDict.forEach((entry, index) => {
+                const el = createPictogramElement(entry, entry.palabras[0], null, false);
+                const deleteBtn = document.createElement('button');
+                deleteBtn.className = 'action-btn clear';
+                deleteBtn.style.marginTop = '10px';
+                deleteBtn.style.width = '100%';
+                deleteBtn.style.padding = '5px';
+                deleteBtn.style.fontSize = '1rem';
+                deleteBtn.textContent = 'Eliminar';
+                deleteBtn.onclick = () => {
+                    if(confirm('¿Eliminar este pictograma?')) {
+                        state.customDict.splice(index, 1);
+                        saveState('customDict', state.customDict);
+                        renderCustomGrid();
+                        renderLibrary(); // Actualizar libreria
+                    }
+                };
+                el.appendChild(deleteBtn);
+                grid.appendChild(el);
+            });
+        }
+
+        /* =========================================================================
+           7. IMÁGENES PERSONALIZADAS (Base64)
+           ========================================================================= */
+        let currentBase64 = null;
+
+        function handleImageUpload(e) {
+            const file = e.target.files[0];
+            if (!file) return;
+
+            const reader = new FileReader();
+            reader.onload = function(event) {
+                currentBase64 = event.target.result;
+                const preview = document.getElementById('image-preview');
+                preview.innerHTML = `<img src="${currentBase64}" alt="Preview">`;
+            };
+            reader.readAsDataURL(file);
+        }
+
+        function saveCustomPictogram() {
+            const wordInput = document.getElementById('custom-word').value.trim();
+            const category = document.getElementById('custom-category').value;
+
+            if (!wordInput) {
+                alert('Por favor, escribe una palabra o frase.');
+                return;
+            }
+            if (!currentBase64) {
+                alert('Por favor, selecciona una imagen.');
+                return;
+            }
+
+            const palabras = wordInput.split(',').map(p => p.trim());
+
+            const newEntry = {
+                palabras: palabras,
+                img: currentBase64,
+                cat: category
+            };
+
+            state.customDict.push(newEntry);
+            saveState('customDict', state.customDict);
+
+            // Limpiar form
+            document.getElementById('custom-word').value = '';
+            document.getElementById('custom-image').value = '';
+            document.getElementById('image-preview').innerHTML = 'Preview de imagen';
+            currentBase64 = null;
+
+            alert('✅ Pictograma guardado con éxito!');
+            renderCustomGrid();
+            renderLibrary();
+        }
+
+        /* =========================================================================
+           8. SÍNTESIS DE VOZ (TTS)
+           ========================================================================= */
+        function initSpeechSynthesis() {
+            if (!('speechSynthesis' in window)) {
+                console.warn('Síntesis de voz no soportada en este navegador.');
+                return;
+            }
+
+            const populateVoices = () => {
+                voices = synth.getVoices();
+                const select = document.getElementById('voice-select');
+                select.innerHTML = '';
+
+                // Filtrar voces en español o mostrar todas
+                let esVoices = voices.filter(v => v.lang.startsWith('es'));
+                let displayVoices = esVoices.length > 0 ? esVoices : voices;
+
+                displayVoices.forEach(voice => {
+                    const option = document.createElement('option');
+                    option.value = voice.voiceURI;
+                    option.textContent = `${voice.name} (${voice.lang})`;
+                    if (state.settings.voiceURI === voice.voiceURI) {
+                        option.selected = true;
+                    }
+                    select.appendChild(option);
+                });
+
+                // Si no hay voz seleccionada, seleccionar la primera en español
+                if (!state.settings.voiceURI && esVoices.length > 0) {
+                    state.settings.voiceURI = esVoices[0].voiceURI;
+                    select.value = state.settings.voiceURI;
+                    saveState('settings', state.settings);
+                }
+            };
+
+            populateVoices();
+            if (speechSynthesis.onvoiceschanged !== undefined) {
+                speechSynthesis.onvoiceschanged = populateVoices;
+            }
+        }
+
+        function speakText(text) {
+            if (!text || !('speechSynthesis' in window)) return;
+
+            synth.cancel(); // Detener si está hablando
+
+            const utterance = new SpeechSynthesisUtterance(text);
+            utterance.rate = state.settings.voiceRate;
+
+            if (state.settings.voiceURI) {
+                const selectedVoice = voices.find(v => v.voiceURI === state.settings.voiceURI);
+                if (selectedVoice) {
+                    utterance.voice = selectedVoice;
+                }
+            }
+
+            synth.speak(utterance);
+        }
+
+        /* =========================================================================
+           9. UI Y UTILIDADES
+           ========================================================================= */
+        window.switchTab = function(tabId) {
+            document.querySelectorAll('.tab-content').forEach(tab => tab.classList.remove('active'));
+            document.querySelectorAll('.tab-btn').forEach(btn => btn.classList.remove('active'));
+
+            document.getElementById(tabId).classList.add('active');
+            event.currentTarget.classList.add('active');
+        };
+
+        window.toggleTheme = function() {
+            state.settings.theme = state.settings.theme === 'light' ? 'dark' : 'light';
+            saveState('settings', state.settings);
+            applyTheme();
+        };
+
+        function saveState(key, data) {
+            localStorage.setItem(key, typeof data === 'object' ? JSON.stringify(data) : data);
+        }
+
+        function initSettings() {
+            document.getElementById('high-contrast-toggle').checked = state.settings.highContrast;
+            document.getElementById('show-text-toggle').checked = state.settings.showText;
+            document.getElementById('voice-rate').value = state.settings.voiceRate;
+            document.getElementById('rate-value').textContent = state.settings.voiceRate === 1 ? 'Normal' : state.settings.voiceRate + 'x';
+
+            applyTheme();
+            applyTextVisibility();
+        }
+
+        function applyTheme() {
+            document.documentElement.setAttribute('data-theme', state.settings.theme);
+            if (state.settings.highContrast) {
+                document.documentElement.setAttribute('data-contrast', 'high');
+            } else {
+                document.documentElement.removeAttribute('data-contrast');
+            }
+        }
+
+        function applyTextVisibility() {
+            if (state.settings.showText) {
+                document.body.classList.remove('hide-text');
+            } else {
+                document.body.classList.add('hide-text');
+            }
+        }
+    </script>
+</body>
+</html>

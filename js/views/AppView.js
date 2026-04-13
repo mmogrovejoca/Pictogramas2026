@@ -71,11 +71,17 @@ class AppView {
                 controller.handleLibraryFilter(e.target.value.toLowerCase(), this.getCurrentFilter().category, this.getCurrentFilter().source);
             });
 
-            document.querySelectorAll('.filter-btn:not(.source-btn)').forEach(btn => {
+            document.querySelectorAll('.filter-btn:not(.source-btn):not(.gram-btn):not(.num-btn)').forEach(btn => {
                 btn.addEventListener('click', (e) => {
-                    document.querySelectorAll('.filter-btn:not(.source-btn)').forEach(b => b.classList.remove('active'));
+                    document.querySelectorAll('.filter-btn:not(.source-btn):not(.gram-btn):not(.num-btn)').forEach(b => b.classList.remove('active'));
                     e.target.classList.add('active');
-                    controller.handleLibraryFilter(librarySearch.value.toLowerCase(), e.target.dataset.filter, this.getCurrentFilter().source);
+                    controller.handleLibraryFilter(
+                        librarySearch.value.toLowerCase(),
+                        e.target.dataset.filter,
+                        this.getCurrentFilter().source,
+                        this.getCurrentFilter().gramatica,
+                        this.getCurrentFilter().number
+                    );
                 });
             });
 
@@ -83,7 +89,43 @@ class AppView {
                 btn.addEventListener('click', (e) => {
                     document.querySelectorAll('.source-btn').forEach(b => b.classList.remove('active'));
                     e.target.classList.add('active');
-                    controller.handleLibraryFilter(librarySearch.value.toLowerCase(), this.getCurrentFilter().category, e.target.dataset.source);
+                    controller.handleLibraryFilter(
+                        librarySearch.value.toLowerCase(),
+                        this.getCurrentFilter().category,
+                        e.target.dataset.source,
+                        this.getCurrentFilter().gramatica,
+                        this.getCurrentFilter().number
+                    );
+                });
+            });
+
+            // Filtros de categoría gramatical
+            document.querySelectorAll('.gram-btn').forEach(btn => {
+                btn.addEventListener('click', (e) => {
+                    document.querySelectorAll('.gram-btn').forEach(b => b.classList.remove('active'));
+                    e.target.classList.add('active');
+                    controller.handleLibraryFilter(
+                        librarySearch.value.toLowerCase(),
+                        this.getCurrentFilter().category,
+                        this.getCurrentFilter().source,
+                        e.target.dataset.gram,
+                        this.getCurrentFilter().number
+                    );
+                });
+            });
+
+            // Filtros de número (singular/plural)
+            document.querySelectorAll('.num-btn').forEach(btn => {
+                btn.addEventListener('click', (e) => {
+                    document.querySelectorAll('.num-btn').forEach(b => b.classList.remove('active'));
+                    e.target.classList.add('active');
+                    controller.handleLibraryFilter(
+                        librarySearch.value.toLowerCase(),
+                        this.getCurrentFilter().category,
+                        this.getCurrentFilter().source,
+                        this.getCurrentFilter().gramatica,
+                        e.target.dataset.num
+                    );
                 });
             });
         }
@@ -207,11 +249,15 @@ class AppView {
     }
 
     getCurrentFilter() {
-        const activeCat = document.querySelector('.filter-btn.active:not(.source-btn)');
+        const activeCat = document.querySelector('.filter-btn.active:not(.source-btn):not(.gram-btn):not(.num-btn)');
         const activeSource = document.querySelector('.source-btn.active');
+        const activeGram = document.querySelector('.gram-btn.active');
+        const activeNum = document.querySelector('.num-btn.active');
         return {
             category: activeCat ? activeCat.dataset.filter : 'all',
-            source: activeSource ? activeSource.dataset.source : 'all'
+            source: activeSource ? activeSource.dataset.source : 'all',
+            gramatica: activeGram ? activeGram.dataset.gram : 'all',
+            number: activeNum ? activeNum.dataset.num : 'all'
         };
     }
 
@@ -279,17 +325,20 @@ class AppView {
         if(container) container.innerHTML = '';
     }
 
-    createPictogramElement(data, displayWord, id = null, isDraggable = true) {
+    // Firma extendida: alternatives[] y onAlternativeSelect callback opcionales
+    createPictogramElement(data, displayWord, id = null, isDraggable = true, alternatives = [], onAlternativeSelect = null) {
         const div = document.createElement('div');
         div.className = 'pictogram';
         div.dataset.category = data.cat;
+        div.dataset.gramatica = data.gramatica || 'otro';
+        div.dataset.source = data.source || 'ARASAAC';
         if (isDraggable) {
             div.draggable = true;
             div.ondragstart = window.drag;
         }
         div.id = id || "picto-" + Date.now() + Math.random().toString(36).substr(2, 9);
 
-        // Remove btn
+        // Botón eliminar
         const removeBtn = document.createElement('button');
         removeBtn.className = 'remove-btn';
         removeBtn.title = 'Eliminar';
@@ -299,32 +348,30 @@ class AppView {
 
         const imgContainer = document.createElement('div');
         imgContainer.className = 'picto-img';
+        if (data.isPlural) imgContainer.classList.add('plural-img');
 
-        if (data.isPlural) {
-            imgContainer.classList.add('plural-img');
-        }
-
-        const renderContent = () => {
-            if (data.img.startsWith('data:image')) {
+        const renderContent = (imgSrc) => {
+            if (!imgSrc) imgSrc = data.img;
+            if (imgSrc.startsWith('data:image')) {
                 const img = document.createElement('img');
-                img.src = data.img;
+                img.src = imgSrc;
                 img.alt = displayWord;
                 return img;
-            } else if (data.img.startsWith('<svg')) {
+            } else if (imgSrc.startsWith('<svg')) {
                 const svgWrap = document.createElement('div');
                 svgWrap.className = 'svg-wrapper';
-                svgWrap.innerHTML = data.img;
+                svgWrap.innerHTML = imgSrc;
                 return svgWrap;
             } else {
                 const textNode = document.createElement('span');
-                textNode.textContent = data.img;
+                textNode.textContent = imgSrc;
                 return textNode;
             }
         };
 
-        imgContainer.appendChild(renderContent());
+        imgContainer.appendChild(renderContent(data.img));
         if (data.isPlural) {
-            imgContainer.appendChild(renderContent());
+            imgContainer.appendChild(renderContent(data.img));
         }
 
         const labelContainer = document.createElement('div');
@@ -333,14 +380,79 @@ class AppView {
 
         div.appendChild(imgContainer);
         div.appendChild(labelContainer);
-        div.appendChild(removeBtn);
 
+        // Selector visual de alternativas (si hay más de una fuente disponible)
+        if (alternatives && alternatives.length > 1 && typeof onAlternativeSelect === 'function') {
+            const altSelector = document.createElement('div');
+            altSelector.className = 'alternatives-selector';
+            altSelector.title = 'Elige fuente visual';
+
+            alternatives.forEach((alt, idx) => {
+                const thumb = document.createElement('span');
+                thumb.className = 'alt-thumb' + (idx === 0 ? ' active' : '');
+                thumb.title = alt.source;
+                thumb.dataset.source = alt.source;
+
+                // Miniatura de la alternativa
+                if (alt.img.startsWith('<svg') || alt.img.startsWith('data:image')) {
+                    const mini = document.createElement('span');
+                    mini.innerHTML = alt.img.startsWith('<svg')
+                        ? alt.img
+                        : `<img src="${alt.img}" style="width:100%;height:100%;"/>`;
+                    mini.style.cssText = 'display:block;width:100%;height:100%;';
+                    thumb.appendChild(mini);
+                } else {
+                    thumb.textContent = alt.img; // emoji
+                }
+
+                thumb.addEventListener('click', (e) => {
+                    e.stopPropagation();
+                    // Marcar como activa
+                    altSelector.querySelectorAll('.alt-thumb').forEach(t => t.classList.remove('active'));
+                    thumb.classList.add('active');
+                    // Actualizar imagen principal
+                    onAlternativeSelect(alt.img, alt.source);
+                });
+
+                altSelector.appendChild(thumb);
+            });
+
+            div.appendChild(altSelector);
+        }
+
+        div.appendChild(removeBtn);
         return div;
     }
 
     appendPictogramToGenerator(el) {
         const container = document.getElementById('picto-output');
         if(container) container.appendChild(el);
+    }
+
+    // Actualiza solo la imagen de un pictograma ya renderizado
+    // (usado por handleAlternativeSelect sin re-renderizar todo)
+    updatePictogramImage(domElement, newImg, newSource) {
+        const imgContainer = domElement.querySelector('.picto-img');
+        if (!imgContainer) return;
+        imgContainer.innerHTML = '';
+
+        if (newImg.startsWith('<svg')) {
+            const wrap = document.createElement('div');
+            wrap.className = 'svg-wrapper';
+            wrap.innerHTML = newImg;
+            imgContainer.appendChild(wrap);
+        } else if (newImg.startsWith('data:image')) {
+            const img = document.createElement('img');
+            img.src = newImg;
+            imgContainer.appendChild(img);
+        } else {
+            const span = document.createElement('span');
+            span.textContent = newImg;
+            imgContainer.appendChild(span);
+        }
+
+        // Actualizar badge de fuente en el dataset
+        if (newSource) domElement.dataset.source = newSource;
     }
 
     setAILoadingState(domElement) {
@@ -367,7 +479,7 @@ class AppView {
         removeBtn.addEventListener('click', function() { this.parentElement.remove(); });
     }
 
-    renderLibrary(dict, searchTerm = "", filter = "all", sourceFilter = "all") {
+    renderLibrary(dict, searchTerm = "", filter = "all", sourceFilter = "all", gramaticaFilter = "all", numberFilter = "all") {
         const grid = document.getElementById('library-grid');
         const miniGrid = document.getElementById('builder-library');
 
@@ -377,20 +489,25 @@ class AppView {
         miniGrid.innerHTML = '';
 
         const filteredDict = dict.filter(entry => {
+            // Filtro de búsqueda
             const matchSearch = entry.palabras.some(p => p.toLowerCase().includes(searchTerm));
+            // Filtro de categoría visual ARASAAC
             const matchFilter = filter === 'all' || entry.cat === filter;
+            // Filtro de fuente
+            const entrySource = entry.source || 'Personalizado';
+            const matchSource = sourceFilter === 'all' || entrySource === sourceFilter;
+            // Filtro de categoría gramatical
+            const matchGramatica = gramaticaFilter === 'all' || (entry.gramatica || 'otro') === gramaticaFilter;
+            // Filtro de número (singular/plural)
+            let matchNumber = true;
+            if (numberFilter === 'singular') matchNumber = !entry.isPlural;
+            else if (numberFilter === 'plural') matchNumber = !!entry.isPlural;
 
-            let matchSource = true;
-            if (sourceFilter !== 'all') {
-                const entrySource = entry.source || 'Personalizado';
-                matchSource = entrySource === sourceFilter;
-            }
-
-            return matchSearch && matchFilter && matchSource;
+            return matchSearch && matchFilter && matchSource && matchGramatica && matchNumber;
         });
 
         if (filteredDict.length === 0) {
-            grid.innerHTML = '<p style="color:#888; grid-column: 1/-1; text-align: center;">No se encontraron resultados.</p>';
+            grid.innerHTML = '<p style="color:#888; grid-column: 1/-1; text-align: center; padding: 2rem;">No se encontraron resultados. Prueba otra búsqueda o elimina algunos filtros.</p>';
             return;
         }
 

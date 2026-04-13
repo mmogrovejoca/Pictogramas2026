@@ -723,3 +723,135 @@ textarea:focus {
         print-color-adjust: exact !important;
     }
 }
+
+/* ═══════════════════════════════════════════════════════════════
+   SELECTOR VISUAL DE ALTERNATIVAS — nuevo en v2.0
+   Aparece debajo del pictograma cuando hay múltiples fuentes
+   ═══════════════════════════════════════════════════════════════ */
+
+/* Ajuste del pictograma para acomodar el selector */
+.pictogram:has(.alternatives-selector) {
+    height: auto;
+    min-height: 220px;
+    padding-bottom: 8px;
+}
+
+/* Contenedor de miniaturas de fuentes alternativas */
+.alternatives-selector {
+    display: flex;
+    gap: 4px;
+    justify-content: center;
+    flex-wrap: wrap;
+    width: 100%;
+    padding: 4px 2px 0;
+    border-top: 1px dashed #ddd;
+    margin-top: 4px;
+}
+
+[data-theme="dark"] .alternatives-selector { border-top-color: #444; }
+[data-contrast="high"] .alternatives-selector { border-top-color: #fff; }
+
+/* Cada miniatura de alternativa */
+.alt-thumb {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 32px;
+    height: 32px;
+    font-size: 22px;
+    border: 2px solid transparent;
+    border-radius: 6px;
+    cursor: pointer;
+    transition: border-color 0.18s, transform 0.15s, background 0.15s;
+    background: rgba(0,0,0,0.04);
+    overflow: hidden;
+    flex-shrink: 0;
+}
+
+.alt-thumb svg { width: 100%; height: 100%; }
+.alt-thumb img { width: 100%; height: 100%; object-fit: contain; }
+
+.alt-thumb:hover {
+    border-color: var(--primary-color);
+    transform: scale(1.15);
+    background: rgba(91,134,229,0.1);
+}
+
+/* Alternativa actualmente seleccionada */
+.alt-thumb.active {
+    border-color: var(--primary-color);
+    background: rgba(91,134,229,0.15);
+    box-shadow: 0 0 0 2px rgba(91,134,229,0.3);
+}
+
+[data-contrast="high"] .alt-thumb {
+    border-color: #fff;
+    background: #000;
+}
+[data-contrast="high"] .alt-thumb.active {
+    background: #fff;
+    color: #000;
+}
+
+/* Tooltips de fuente en los filtros gramaticales */
+.gram-filters .gram-btn {
+    font-size: 0.95rem;
+    padding: 0.4rem 0.9rem;
+    border-color: #a0aec0;
+    color: #4a5568;
+}
+.gram-btn.active {
+    background: #5b86e5 !important;
+    color: white !important;
+    border-color: #5b86e5 !important;
+}
+[data-theme="dark"] .gram-btn {
+    color: #cbd5e0;
+    border-color: #4a5568;
+    background: #1e293b;
+}
+
+.num-btn {
+    font-size: 0.95rem;
+    padding: 0.4rem 0.9rem;
+    border-color: #a0aec0;
+    color: #4a5568;
+}
+.num-btn.active {
+    background: #e53935 !important;
+    color: white !important;
+    border-color: #e53935 !important;
+}
+[data-theme="dark"] .num-btn {
+    color: #cbd5e0;
+    border-color: #4a5568;
+    background: #1e293b;
+}
+
+/* Badge de fuente visible en la biblioteca */
+.pictogram::after {
+    content: attr(data-source);
+    position: absolute;
+    bottom: 42px;
+    right: 6px;
+    font-size: 0.55rem;
+    font-weight: bold;
+    background: rgba(0,0,0,0.45);
+    color: white;
+    padding: 1px 4px;
+    border-radius: 4px;
+    opacity: 0;
+    transition: opacity 0.2s;
+    pointer-events: none;
+    white-space: nowrap;
+    text-transform: uppercase;
+    letter-spacing: 0.3px;
+}
+.pictogram:hover::after {
+    opacity: 1;
+}
+
+/* Ajuste print: ocultar selector */
+@media print {
+    .alternatives-selector { display: none !important; }
+}

@@ -35,9 +35,10 @@ class AppController {
 
     handleTextInput(text) {
         clearTimeout(this.debounceTimer);
+        // Debounce de 500 ms para análisis en tiempo real
         this.debounceTimer = setTimeout(() => {
             this.handleGenerateClick(text);
-        }, 600);
+        }, 500);
     }
 
     handleGenerateClick(text) {
@@ -52,12 +53,12 @@ class AppController {
         const tokensToProcess = [];
 
         let i = 0;
-        // Ventana deslizante para encontrar frases (n-gramas) hasta de 4 palabras
+        // Ventana deslizante para encontrar frases (n-gramas) hasta 6 palabras
         while (i < wordsRaw.length) {
             let foundMatch = false;
 
-            // Intentar coincidencias de 4, 3, 2 y 1 palabra
-            for (let windowSize = 4; windowSize > 0; windowSize--) {
+            // Intentar coincidencias de 6, 5, 4, 3, 2 y 1 palabra
+            for (let windowSize = 6; windowSize > 0; windowSize--) {
                 if (i + windowSize <= wordsRaw.length) {
                     const phrase = wordsRaw.slice(i, i + windowSize).join(" ");
                     const cleanPhrase = this.dictModel.normalizeString(phrase);
@@ -65,7 +66,9 @@ class AppController {
                     const pictoData = this.dictModel.findPictogram(cleanPhrase);
 
                     if (pictoData) {
-                        tokensToProcess.push({ word: phrase, data: pictoData });
+                        // Obtener todas las alternativas disponibles para el selector visual
+                        const alternatives = this.dictModel.findAllPictograms(cleanPhrase);
+                        tokensToProcess.push({ word: phrase, data: pictoData, alternatives });
                         i += windowSize;
                         foundMatch = true;
                         break;
@@ -74,11 +77,11 @@ class AppController {
             }
 
             if (!foundMatch) {
-                // Si no hay coincidencia y no es stop word, agregarlo como desconocido para IA
+                // Si no hay coincidencia y no es stop word, agregar como desconocido para IA
                 const singleWord = wordsRaw[i];
                 const cleanW = this.dictModel.normalizeString(singleWord);
                 if (cleanW && !this.dictModel.stopWords.includes(cleanW)) {
-                    tokensToProcess.push({ word: singleWord, data: null });
+                    tokensToProcess.push({ word: singleWord, data: null, alternatives: [] });
                 }
                 i++;
             }
@@ -91,12 +94,20 @@ class AppController {
 
         tokensToProcess.forEach(token => {
             if (token.data) {
-                const el = this.view.createPictogramElement(token.data, token.word);
+                // Crear pictograma con selector de alternativas si hay más de una fuente
+                const el = this.view.createPictogramElement(
+                    token.data,
+                    token.word,
+                    null,
+                    true,
+                    token.alternatives || [],
+                    (altImg, altSource) => this.handleAlternativeSelect(token.word, altImg, altSource, el)
+                );
                 this.view.appendPictogramToGenerator(el);
             } else {
                 const cleanWord = token.word;
-                const unknownData = { img: "❓", cat: "otros", palabras: [cleanWord], source: "Desconocido" };
-                const el = this.view.createPictogramElement(unknownData, cleanWord);
+                const unknownData = { img: "❓", cat: "otros", palabras: [cleanWord], source: "Desconocido", gramatica: "otro" };
+                const el = this.view.createPictogramElement(unknownData, cleanWord, null, true, [], null);
 
                 if (this.stateModel.settings.apiKey && this.stateModel.settings.autoAI) {
                     this.triggerAIGeneration(cleanWord, el);
@@ -147,6 +158,18 @@ class AppController {
         }
     }
 
+    // ─────────────────────────────────────────────────────────────
+    // handleAlternativeSelect: guarda la preferencia visual del usuario
+    // y actualiza la imagen en el pictograma activo
+    // ─────────────────────────────────────────────────────────────
+    handleAlternativeSelect(word, altImg, altSource, domElement) {
+        const normalizedWord = this.dictModel.normalizeString(word);
+        // Guardar preferencia en localStorage
+        this.dictModel.saveUserPreference(normalizedWord, { img: altImg, source: altSource });
+        // Actualizar imagen en el DOM sin re-renderizar todo
+        this.view.updatePictogramImage(domElement, altImg, altSource);
+    }
+
     speakText(text) {
         this.view.speak(text, this.stateModel.settings);
     }
@@ -170,13 +193,13 @@ class AppController {
         this.updateFavorites();
     }
 
-    handleLibraryFilter(searchTerm, filter, source) {
-        this.view.renderLibrary(this.dictModel.getFullDict(), searchTerm, filter, source);
+    handleLibraryFilter(searchTerm, filter, source, gramatica, number) {
+        this.view.renderLibrary(this.dictModel.getFullDict(), searchTerm, filter, source, gramatica, number);
     }
 
     updateLibrary() {
         const filters = this.view.getCurrentFilter();
-        this.view.renderLibrary(this.dictModel.getFullDict(), "", filters.category, filters.source);
+        this.view.renderLibrary(this.dictModel.getFullDict(), "", filters.category, filters.source, filters.gramatica, filters.number);
     }
 
     updateCustomGrid() {

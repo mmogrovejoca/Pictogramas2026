@@ -713,6 +713,105 @@ textarea:focus {
 [data-contrast="high"] .alt-thumb { border-color: #555; }
 [data-contrast="high"] .alt-thumb.active { border-color: #fff; background: #222; }
 
+/* Thumbs dinámicas de Open Symbols / Mulberry / Sclera */
+.alt-thumb--dynamic {
+    position: relative;
+    width: 32px;
+    height: 32px;
+    background: #fff;
+    opacity: 0;
+    transition: opacity 0.35s ease, transform var(--t-fast) var(--ease-spring), border-color var(--t-fast);
+}
+.alt-thumb--dynamic.alt-thumb--loaded {
+    opacity: 1;  /* aparece solo cuando la imagen cargó */
+}
+.alt-thumb--dynamic:hover { transform: scale(1.22); }
+
+/* Badge de fuente (Mulberry, Sclera, etc.) */
+.alt-source-badge {
+    position: absolute;
+    bottom: -1px;
+    right: -1px;
+    font-size: 7px;
+    font-weight: 800;
+    padding: 1px 3px;
+    border-radius: 4px 0 6px 0;
+    white-space: nowrap;
+    max-width: 30px;
+    overflow: hidden;
+    pointer-events: none;
+    line-height: 1.2;
+    letter-spacing: -0.02em;
+}
+
+/* Color por fuente */
+[data-source-name="Mulberry"] .alt-source-badge,
+.alt-thumb--dynamic[data-source-name="Mulberry"] .alt-source-badge {
+    background: #6B2D8B; color: #fff;
+}
+[data-source-name="Sclera"] .alt-source-badge,
+.alt-thumb--dynamic[data-source-name="Sclera"] .alt-source-badge {
+    background: #005CA9; color: #fff;
+}
+[data-source-name="SymbolStix"] .alt-source-badge,
+.alt-thumb--dynamic[data-source-name="SymbolStix"] .alt-source-badge {
+    background: #00796B; color: #fff;
+}
+[data-source-name="ARASAAC"] .alt-source-badge,
+.alt-thumb--dynamic[data-source-name="ARASAAC"] .alt-source-badge {
+    background: #E65100; color: #fff;
+}
+.alt-source-badge {
+    background: #455A64; color: #fff; /* default */
+}
+
+/* Label "Fuentes:" */
+.alts-label {
+    width: 100%;
+    font-size: 0.63rem;
+    font-weight: 700;
+    color: var(--c-muted);
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+    margin-bottom: 2px;
+}
+
+/* Input header (indicador de estado de carga) */
+.input-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 6px;
+}
+.input-header-title {
+    font-size: 0.875rem;
+    font-weight: 700;
+    color: var(--c-text);
+}
+.input-status {
+    font-size: 0.72rem;
+    font-weight: 600;
+    color: var(--c-primary);
+    background: rgba(79,127,255,0.09);
+    padding: 2px 8px;
+    border-radius: 20px;
+    transition: all 0.4s ease;
+}
+
+/* App badge en el título */
+.app-badge {
+    font-size: 0.55em;
+    font-weight: 700;
+    background: var(--grad-warm);
+    color: #fff;
+    padding: 2px 8px;
+    border-radius: 20px;
+    vertical-align: middle;
+    margin-left: 6px;
+    letter-spacing: 0.03em;
+}
+
+
 /* ═══════════════════════════════════════════════════════════
    FAVORITOS
    ═══════════════════════════════════════════════════════════ */
@@ -851,6 +950,7 @@ textarea:focus {
 .filter-btn[data-filter="lugares"]   { border-color: var(--cat-lugares);   color: var(--cat-lugares);   }
 .filter-btn[data-filter="emociones"] { border-color: var(--cat-emociones); color: var(--cat-emociones); }
 .filter-btn[data-filter="alimentos"] { border-color: var(--cat-alimentos); color: var(--cat-alimentos); }
+.filter-btn[data-filter="deportes"]  { border-color: #00BCD4; color: #006978; }
 
 .filter-btn[data-filter="personas"].active  { background: var(--cat-personas);  border-color: var(--cat-personas);  box-shadow: 0 4px 12px rgba(255,152,51,0.35); }
 .filter-btn[data-filter="acciones"].active  { background: var(--cat-acciones);  border-color: var(--cat-acciones);  }
@@ -858,6 +958,34 @@ textarea:focus {
 .filter-btn[data-filter="lugares"].active   { background: var(--cat-lugares);   border-color: var(--cat-lugares);   box-shadow: 0 4px 12px rgba(36,196,138,0.35); }
 .filter-btn[data-filter="emociones"].active { background: var(--cat-emociones); border-color: var(--cat-emociones); box-shadow: 0 4px 12px rgba(255,92,92,0.35); }
 .filter-btn[data-filter="alimentos"].active { background: var(--cat-alimentos); border-color: var(--cat-alimentos); box-shadow: 0 4px 12px rgba(167,139,250,0.35); }
+.filter-btn[data-filter="deportes"].active  { background: #00BCD4; border-color: #00BCD4; color: #fff; box-shadow: 0 4px 12px rgba(0,188,212,0.35); }
+
+/* Categoría deportes en tarjetas de pictograma */
+.pictogram[data-category="deportes"] { --cat-color: #00BCD4; --cat-bg: rgba(0,188,212,0.08); }
+.pictogram[data-category="deportes"] .picto-img { border-top-color: #00BCD4; }
+
+/* Badge fuentes adicionales */
+[data-source-name="Global Symbols"] .alt-source-badge,
+.alt-thumb--dynamic[data-source-name="Global Symbols"] .alt-source-badge {
+    background: #FF6F00; color: #fff;
+}
+[data-source-name="SymbolStix"] .alt-source-badge,
+.alt-thumb--dynamic[data-source-name="SymbolStix"] .alt-source-badge {
+    background: #00796B; color: #fff;
+}
+[data-source-name="Snap Core First"] .alt-source-badge,
+.alt-thumb--dynamic[data-source-name="Snap Core First"] .alt-source-badge {
+    background: #6A1B9A; color: #fff;
+}
+[data-source-name="PCS"] .alt-source-badge,
+.alt-thumb--dynamic[data-source-name="PCS"] .alt-source-badge {
+    background: #C62828; color: #fff;
+}
+
+/* Estadísticas de fuentes en header */
+.app-badge {
+    cursor: help;
+}
 
 /* Filtros especiales */
 .gram-btn.active {

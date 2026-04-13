@@ -456,6 +456,91 @@ class AppView {
         img.src = imgUrl;
     }
 
+    // ─────────────────────────────────────────────────────────────────
+    // addAlternativesToPictogram
+    // Añade thumbnails de fuentes alternativas (Mulberry, Sclera, etc.)
+    // al selector de alternativas de un pictograma ya renderizado.
+    // Si el selector no existe todavía, lo crea.
+    // images: [{ source: 'Mulberry', imgUrl: 'https://...', license: '...' }]
+    // ─────────────────────────────────────────────────────────────────
+    addAlternativesToPictogram(domElement, images, onSelect) {
+        if (!domElement || !images || images.length === 0) return;
+
+        // Buscar o crear el contenedor de alternativas
+        let selector = domElement.querySelector('.alternatives-selector');
+        if (!selector) {
+            selector = document.createElement('div');
+            selector.className = 'alternatives-selector';
+            const removeBtn = domElement.querySelector('.remove-btn');
+            // Insertar antes del botón de borrar (o al final si no existe)
+            domElement.insertBefore(selector, removeBtn || null);
+        }
+
+        // Etiqueta de sección si no existe aún
+        if (!selector.querySelector('.alts-label')) {
+            const lbl = document.createElement('span');
+            lbl.className = 'alts-label';
+            lbl.textContent = 'Fuentes:';
+            selector.insertBefore(lbl, selector.firstChild);
+        }
+
+        images.forEach(alt => {
+            const { source, imgUrl, license } = alt;
+            if (!imgUrl) return;
+
+            // Evitar duplicados por URL o fuente-nombre ya existente
+            if (selector.querySelector(`[data-img-url="${CSS.escape ? imgUrl.slice(0,50) : imgUrl.replace(/['"]/g,'')}"]`)) return;
+            if (selector.querySelector(`[data-source-name="${source}"]`)) return;
+
+            const thumb = document.createElement('span');
+            thumb.className = 'alt-thumb alt-thumb--dynamic';
+            thumb.title = `${source}${license ? ' · ' + license : ''}`;
+            thumb.dataset.sourceName = source;
+            thumb.setAttribute('data-img-url', imgUrl.slice(0, 50));
+
+            // Badge de fuente
+            const badge = document.createElement('span');
+            badge.className = 'alt-source-badge';
+            badge.textContent = source.split(' ')[0]; // "Mulberry", "Sclera", etc.
+
+            // Imagen del pictograma alternativo
+            const img = document.createElement('img');
+            img.loading = 'lazy';
+            img.alt = `Pictograma de ${source}`;
+
+            // Si falla la imagen, quitar el thumb por completo
+            img.onerror = () => {
+                thumb.remove();
+                // Si el selector queda vacío (solo el label), ocultarlo
+                const dynamicThumbs = selector.querySelectorAll('.alt-thumb--dynamic');
+                if (dynamicThumbs.length === 0) {
+                    const lbl = selector.querySelector('.alts-label');
+                    if (lbl) lbl.remove();
+                }
+            };
+
+            img.onload = () => {
+                thumb.classList.add('alt-thumb--loaded');
+            };
+
+            img.src = imgUrl;
+            thumb.appendChild(img);
+            thumb.appendChild(badge);
+
+            // Click: seleccionar esta alternativa como imagen principal
+            thumb.addEventListener('click', (e) => {
+                e.stopPropagation();
+                // Resaltar la seleccionada
+                selector.querySelectorAll('.alt-thumb').forEach(t => t.classList.remove('active'));
+                thumb.classList.add('active');
+                // Notificar al controller
+                if (typeof onSelect === 'function') onSelect(imgUrl, source);
+            });
+
+            selector.appendChild(thumb);
+        });
+    }
+
     // Actualiza solo la imagen de un pictograma ya renderizado
     // (usado por handleAlternativeSelect sin re-renderizar todo)
     updatePictogramImage(domElement, newImg, newSource) {

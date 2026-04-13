@@ -61,6 +61,11 @@ class DictModel {
         // ─────────────────────────────────────────────────────────────
         this.arasaacWordMap = this._buildMassiveWordMap();
 
+        // Mapa ES→EN para fuentes en inglés (Mulberry, Sclera, Open Symbols)
+        this._esEnMap = this._buildEsEnMap();
+        // Mapa directo Mulberry CDN (lazy init en getMulberryUrl)
+        this._mulberryMap = null;
+
         // ─────────────────────────────────────────────────────────────
         // DICCIONARIO BASE (emoji fallback offline)
         // ─────────────────────────────────────────────────────────────
@@ -551,11 +556,373 @@ class DictModel {
             "muy","tan","tanto","solo"
         ];
 
-        this.diccionario = this.expandDictionary(diccionario);
+        // Combinar diccionario base + deportes/ejercicio + vocabulario extendido
+        this.diccionario = this.expandDictionary([
+            ...diccionario,
+            ...this._buildSportsEntries(),
+            ...this._buildExtendedEntries(),
+        ]);
         this.stopWords = stopWords;
     }
 
-    // ─────────────────────────────────────────────────────────────────
+    // ═══════════════════════════════════════════════════════════════════
+    // _buildSportsEntries — 400+ entradas: deportes, ejercicio, fitness
+    // ═══════════════════════════════════════════════════════════════════
+    _buildSportsEntries() {
+        return [
+        // ─── DEPORTES DE PELOTA ───────────────────────────────────────
+        { palabras:["fútbol","futbol","soccer","jugar al fútbol","partido de fútbol"], img:"⚽", cat:"deportes", gramatica:"sustantivo", source:"ARASAAC", arasaacQuery:"fútbol" },
+        { palabras:["baloncesto","basketball","básquet","basquet","jugar al baloncesto"], img:"🏀", cat:"deportes", gramatica:"sustantivo", source:"ARASAAC", arasaacQuery:"baloncesto" },
+        { palabras:["tenis","jugar al tenis","partido de tenis"], img:"🎾", cat:"deportes", gramatica:"sustantivo", source:"ARASAAC", arasaacQuery:"tenis" },
+        { palabras:["voleibol","volleyball","vóley","voley"], img:"🏐", cat:"deportes", gramatica:"sustantivo", source:"ARASAAC", arasaacQuery:"voleibol" },
+        { palabras:["balonmano","handball"], img:"🤾", cat:"deportes", gramatica:"sustantivo", source:"ARASAAC", arasaacQuery:"balonmano" },
+        { palabras:["rugby","rugby union"], img:"🏉", cat:"deportes", gramatica:"sustantivo", source:"ARASAAC", arasaacQuery:"rugby" },
+        { palabras:["béisbol","beisbol","baseball"], img:"⚾", cat:"deportes", gramatica:"sustantivo", source:"ARASAAC", arasaacQuery:"béisbol" },
+        { palabras:["softbol","softball"], img:"🥎", cat:"deportes", gramatica:"sustantivo", source:"ARASAAC", arasaacQuery:"softball" },
+        { palabras:["golf","jugar al golf"], img:"⛳", cat:"deportes", gramatica:"sustantivo", source:"ARASAAC", arasaacQuery:"golf" },
+        { palabras:["hockey","hockey sobre hielo","hockey hierba"], img:"🏒", cat:"deportes", gramatica:"sustantivo", source:"ARASAAC", arasaacQuery:"hockey" },
+        { palabras:["ping pong","tenis de mesa","pimpón"], img:"🏓", cat:"deportes", gramatica:"sustantivo", source:"ARASAAC", arasaacQuery:"ping pong" },
+        { palabras:["bádminton","badminton"], img:"🏸", cat:"deportes", gramatica:"sustantivo", source:"ARASAAC", arasaacQuery:"bádminton" },
+        { palabras:["fútbol americano","american football"], img:"🏈", cat:"deportes", gramatica:"sustantivo", source:"ARASAAC", arasaacQuery:"fútbol americano" },
+        { palabras:["billar","billar pool"], img:"🎱", cat:"deportes", gramatica:"sustantivo", source:"ARASAAC", arasaacQuery:"billar" },
+        { palabras:["bolos","bowling","bolera"], img:"🎳", cat:"deportes", gramatica:"sustantivo", source:"ARASAAC", arasaacQuery:"bolos" },
+        { palabras:["frisbee","disco volador","disco"], img:"🥏", cat:"deportes", gramatica:"sustantivo", source:"ARASAAC", arasaacQuery:"frisbee" },
+        
+        // ─── DEPORTES ACUÁTICOS ───────────────────────────────────────
+        { palabras:["natación","nadar","nadando","nado"], img:"🏊", cat:"deportes", gramatica:"sustantivo", source:"ARASAAC", arasaacQuery:"nadar", alternativas:[{source:"Mulberry",img:"🏊‍♂️"}] },
+        { palabras:["buceo","submarinismo","bucear","scuba"], img:"🤿", cat:"deportes", gramatica:"sustantivo", source:"ARASAAC", arasaacQuery:"buceo" },
+        { palabras:["surf","surfear","surfista","surfear olas"], img:"🏄", cat:"deportes", gramatica:"sustantivo", source:"ARASAAC", arasaacQuery:"surf" },
+        { palabras:["kayak","piragüismo","piragua","remar en kayak"], img:"🛶", cat:"deportes", gramatica:"sustantivo", source:"ARASAAC", arasaacQuery:"kayak" },
+        { palabras:["remo","barca de remos","remar"], img:"🚣", cat:"deportes", gramatica:"sustantivo", source:"ARASAAC", arasaacQuery:"remo" },
+        { palabras:["waterpolo","polo acuático"], img:"🏊", cat:"deportes", gramatica:"sustantivo", source:"ARASAAC", arasaacQuery:"waterpolo" },
+        { palabras:["windsurf","vela","velero"], img:"⛵", cat:"deportes", gramatica:"sustantivo", source:"ARASAAC", arasaacQuery:"vela" },
+        { palabras:["esquí acuático","esquí nautique"], img:"🏄", cat:"deportes", gramatica:"sustantivo", source:"ARASAAC", arasaacQuery:"esquí acuático" },
+        { palabras:["natación sincronizada","sincro"], img:"🏊", cat:"deportes", gramatica:"sustantivo", source:"ARASAAC", arasaacQuery:"natación sincronizada" },
+        
+        // ─── DEPORTES DE INVIERNO ───────────────────────────────────────
+        { palabras:["esquí","esquiar","ski","esquiador"], img:"⛷️", cat:"deportes", gramatica:"sustantivo", source:"ARASAAC", arasaacQuery:"esquí" },
+        { palabras:["snowboard","tabla de nieve","snowboarder"], img:"🏂", cat:"deportes", gramatica:"sustantivo", source:"ARASAAC", arasaacQuery:"snowboard" },
+        { palabras:["patinaje","patinar","pista de hielo","patines de hielo"], img:"⛸️", cat:"deportes", gramatica:"sustantivo", source:"ARASAAC", arasaacQuery:"patinaje" },
+        { palabras:["patinaje artístico","patinaje sobre hielo artístico"], img:"⛸️", cat:"deportes", gramatica:"sustantivo", source:"ARASAAC", arasaacQuery:"patinaje artístico" },
+        { palabras:["curling"], img:"🥌", cat:"deportes", gramatica:"sustantivo", source:"ARASAAC", arasaacQuery:"curling" },
+        
+        // ─── ATLETISMO Y CARRERAS ─────────────────────────────────────
+        { palabras:["carrera","correr","running","jogging","trotar"], img:"🏃", cat:"deportes", gramatica:"verbo", source:"ARASAAC", arasaacQuery:"correr", alternativas:[{source:"Mulberry",img:"🏃‍♂️"},{source:"Sclera",img:"🏃‍♀️"}] },
+        { palabras:["maratón","maraton","maratgón"], img:"🏅", cat:"deportes", gramatica:"sustantivo", source:"ARASAAC", arasaacQuery:"maratón" },
+        { palabras:["carrera de velocidad","sprint","esprintear"], img:"🏃", cat:"deportes", gramatica:"sustantivo", source:"ARASAAC", arasaacQuery:"sprint" },
+        { palabras:["salto de altura","saltar en alto"], img:"🏅", cat:"deportes", gramatica:"sustantivo", source:"ARASAAC", arasaacQuery:"salto de altura" },
+        { palabras:["salto de longitud","salto largo"], img:"🏅", cat:"deportes", gramatica:"sustantivo", source:"ARASAAC", arasaacQuery:"salto de longitud" },
+        { palabras:["salto con pértiga","pértiga"], img:"🏅", cat:"deportes", gramatica:"sustantivo", source:"ARASAAC", arasaacQuery:"salto con pértiga" },
+        { palabras:["lanzamiento de jabalina","jabalina"], img:"🏹", cat:"deportes", gramatica:"sustantivo", source:"ARASAAC", arasaacQuery:"jabalina" },
+        { palabras:["lanzamiento de disco","lanzar disco"], img:"🥏", cat:"deportes", gramatica:"sustantivo", source:"ARASAAC", arasaacQuery:"lanzamiento de disco" },
+        { palabras:["relevo","carrera de relevos","testigo"], img:"🏃", cat:"deportes", gramatica:"sustantivo", source:"ARASAAC", arasaacQuery:"relevos" },
+        { palabras:["vallas","carrera de vallas","obstáculos"], img:"🏃", cat:"deportes", gramatica:"sustantivo", source:"ARASAAC", arasaacQuery:"vallas" },
+        { palabras:["triatlon","triatlón","triathlon"], img:"🏅", cat:"deportes", gramatica:"sustantivo", source:"ARASAAC", arasaacQuery:"triatlón" },
+        
+        // ─── CICLISMO ────────────────────────────────────────────────
+        { palabras:["ciclismo","bicicleta","ciclista","montar en bicicleta","pedalear"], img:"🚴", cat:"deportes", gramatica:"sustantivo", source:"ARASAAC", arasaacQuery:"ciclismo", alternativas:[{source:"Mulberry",img:"🚵"}] },
+        { palabras:["bici de montaña","mountain bike","mtb","ciclismo de montaña"], img:"🚵", cat:"deportes", gramatica:"sustantivo", source:"ARASAAC", arasaacQuery:"bicicleta de montaña" },
+        { palabras:["bici estática","bicicleta estática","spinning","cicloindoor"], img:"🚴", cat:"deportes", gramatica:"sustantivo", source:"ARASAAC", arasaacQuery:"bicicleta estática" },
+        { palabras:["pedalear","pedal","pedaleo","dar pedales"], img:"🚴", cat:"deportes", gramatica:"verbo", source:"ARASAAC", arasaacQuery:"pedalear" },
+        
+        // ─── ARTES MARCIALES Y DEPORTES DE CONTACTO ──────────────────
+        { palabras:["karate","kárate","golpe de karate"], img:"🥋", cat:"deportes", gramatica:"sustantivo", source:"ARASAAC", arasaacQuery:"karate", alternativas:[{source:"Mulberry",img:"🥊"}] },
+        { palabras:["judo","yudo","judo tatami"], img:"🥋", cat:"deportes", gramatica:"sustantivo", source:"ARASAAC", arasaacQuery:"judo" },
+        { palabras:["taekwondo","tae kwondo"], img:"🥋", cat:"deportes", gramatica:"sustantivo", source:"ARASAAC", arasaacQuery:"taekwondo" },
+        { palabras:["boxeo","boxear","puñetazo","boxeador","pelea de boxeo"], img:"🥊", cat:"deportes", gramatica:"sustantivo", source:"ARASAAC", arasaacQuery:"boxeo", alternativas:[{source:"Mulberry",img:"🤜"}] },
+        { palabras:["lucha","wrestling","lucha libre","luchador"], img:"🤼", cat:"deportes", gramatica:"sustantivo", source:"ARASAAC", arasaacQuery:"lucha" },
+        { palabras:["esgrima","florete","tocar","asalto de esgrima"], img:"🤺", cat:"deportes", gramatica:"sustantivo", source:"ARASAAC", arasaacQuery:"esgrima" },
+        { palabras:["sumo","luchador de sumo"], img:"🤼", cat:"deportes", gramatica:"sustantivo", source:"ARASAAC", arasaacQuery:"sumo" },
+        { palabras:["aikido","kendo","artes marciales"], img:"🥋", cat:"deportes", gramatica:"sustantivo", source:"ARASAAC", arasaacQuery:"artes marciales" },
+        
+        // ─── TIR Y PRECISIÓN ─────────────────────────────────────────
+        { palabras:["tiro con arco","arquería","flecha","arco y flecha"], img:"🏹", cat:"deportes", gramatica:"sustantivo", source:"ARASAAC", arasaacQuery:"tiro con arco" },
+        { palabras:["tiro olímpico","pistola de tiro","escopeta de tiro"], img:"🎯", cat:"deportes", gramatica:"sustantivo", source:"ARASAAC", arasaacQuery:"tiro" },
+        { palabras:["dardos","juego de dardos"], img:"🎯", cat:"deportes", gramatica:"sustantivo", source:"ARASAAC", arasaacQuery:"dardos" },
+        
+        // ─── DEPORTES DE MONTAÑA ─────────────────────────────────────
+        { palabras:["escalada","escalar","rocódromo"], img:"🧗", cat:"deportes", gramatica:"sustantivo", source:"ARASAAC", arasaacQuery:"escalada", alternativas:[{source:"Mulberry",img:"🧗‍♂️"}] },
+        { palabras:["senderismo","hiking","trekking","senda","caminar por la montaña"], img:"🥾", cat:"deportes", gramatica:"sustantivo", source:"ARASAAC", arasaacQuery:"senderismo" },
+        { palabras:["montañismo","alpinismo","escalar montaña"], img:"⛰️", cat:"deportes", gramatica:"sustantivo", source:"ARASAAC", arasaacQuery:"montañismo" },
+        { palabras:["paracaidismo","paracaídas","saltar en paracaídas"], img:"🪂", cat:"deportes", gramatica:"sustantivo", source:"ARASAAC", arasaacQuery:"paracaidismo" },
+        { palabras:["ala delta","parapente","vuelo libre"], img:"🪂", cat:"deportes", gramatica:"sustantivo", source:"ARASAAC", arasaacQuery:"parapente" },
+        
+        // ─── EQUITACIÓN Y OTROS ───────────────────────────────────────
+        { palabras:["equitación","montar a caballo","hípica","jinete","cabalgata"], img:"🏇", cat:"deportes", gramatica:"sustantivo", source:"ARASAAC", arasaacQuery:"equitación" },
+        { palabras:["patineta","skateboard","skate","patinar"], img:"🛹", cat:"deportes", gramatica:"sustantivo", source:"ARASAAC", arasaacQuery:"skateboard" },
+        { palabras:["scooter","patinete","monopatín eléctrico"], img:"🛴", cat:"deportes", gramatica:"sustantivo", source:"ARASAAC", arasaacQuery:"patinete" },
+        { palabras:["balonvolea","volea","saque de volea"], img:"🏐", cat:"deportes", gramatica:"sustantivo", source:"ARASAAC", arasaacQuery:"voleibol playa" },
+        
+        // ─── EJERCICIO EN GIMNASIO ───────────────────────────────────
+        { palabras:["ejercicio","hacer ejercicio","entrenamiento","workout"], img:"💪", cat:"deportes", gramatica:"sustantivo", source:"ARASAAC", arasaacQuery:"ejercicio", alternativas:[{source:"Mulberry",img:"🏋️"}] },
+        { palabras:["pesas","levantar pesas","halterofilia","levantamiento de pesas","mancuernas"], img:"🏋️", cat:"deportes", gramatica:"sustantivo", source:"ARASAAC", arasaacQuery:"pesas", alternativas:[{source:"Mulberry",img:"💪"},{source:"Sclera",img:"🏋️‍♂️"}] },
+        { palabras:["musculación","muscularse","fortalecer","fuerza muscular"], img:"💪", cat:"deportes", gramatica:"sustantivo", source:"ARASAAC", arasaacQuery:"musculación" },
+        { palabras:["crossfit","entrenamiento funcional","functional training"], img:"🏋️", cat:"deportes", gramatica:"sustantivo", source:"ARASAAC", arasaacQuery:"crossfit" },
+        { palabras:["aeróbic","aerobic","aerobics","clase de aeróbic"], img:"🤸", cat:"deportes", gramatica:"sustantivo", source:"ARASAAC", arasaacQuery:"aeróbic" },
+        { palabras:["zumba","baile aeróbico","clase de baile"], img:"💃", cat:"deportes", gramatica:"sustantivo", source:"ARASAAC", arasaacQuery:"zumba" },
+        { palabras:["yoga","clase de yoga","postura de yoga","yogi"], img:"🧘", cat:"deportes", gramatica:"sustantivo", source:"ARASAAC", arasaacQuery:"yoga", alternativas:[{source:"Mulberry",img:"🧘‍♀️"},{source:"Sclera",img:"🧘‍♂️"}] },
+        { palabras:["meditación","meditar","mindfulness","concentración"], img:"🧘", cat:"deportes", gramatica:"sustantivo", source:"ARASAAC", arasaacQuery:"meditación" },
+        { palabras:["pilates","clase de pilates"], img:"🤸", cat:"deportes", gramatica:"sustantivo", source:"ARASAAC", arasaacQuery:"pilates" },
+        { palabras:["gimnasia","hacer gimnasia","clase de gimnasia","gimansta"], img:"🤸", cat:"deportes", gramatica:"sustantivo", source:"ARASAAC", arasaacQuery:"gimnasia", alternativas:[{source:"Mulberry",img:"🤸‍♀️"}] },
+        { palabras:["acrobacia","acróbata","acrobático","saltar acrobáticamente"], img:"🤸", cat:"deportes", gramatica:"sustantivo", source:"ARASAAC", arasaacQuery:"acrobacia" },
+        
+        // ─── MOVIMIENTOS DE EJERCICIO ESPECÍFICOS ────────────────────
+        { palabras:["flexiones","flexión","push-up","pushup","lagartijas"], img:"💪", cat:"deportes", gramatica:"sustantivo", source:"ARASAAC", arasaacQuery:"flexiones", alternativas:[{source:"Mulberry",img:"🏋️"}] },
+        { palabras:["abdominales","sentadillas abdominales","crunch"], img:"🏃", cat:"deportes", gramatica:"sustantivo", source:"ARASAAC", arasaacQuery:"abdominales" },
+        { palabras:["sentadilla","squat","sentadillas"], img:"🤸", cat:"deportes", gramatica:"sustantivo", source:"ARASAAC", arasaacQuery:"sentadilla" },
+        { palabras:["plancha","plank","aguantar la plancha"], img:"🤸", cat:"deportes", gramatica:"sustantivo", source:"ARASAAC", arasaacQuery:"plancha ejercicio" },
+        { palabras:["estiramiento","estirar","stretch","elongación","calentamiento"], img:"🤸", cat:"deportes", gramatica:"verbo", source:"ARASAAC", arasaacQuery:"estiramiento" },
+        { palabras:["calentamiento","calentar","warm up","precalentamiento"], img:"🏃", cat:"deportes", gramatica:"sustantivo", source:"ARASAAC", arasaacQuery:"calentamiento" },
+        { palabras:["enfriamiento","vuelta a la calma","cool down"], img:"🧘", cat:"deportes", gramatica:"sustantivo", source:"ARASAAC", arasaacQuery:"relajación" },
+        { palabras:["burpee","burpees"], img:"🤸", cat:"deportes", gramatica:"sustantivo", source:"ARASAAC", arasaacQuery:"burpee" },
+        { palabras:["jumping jack","tijeras","saltos de tijera"], img:"🤸", cat:"deportes", gramatica:"sustantivo", source:"ARASAAC", arasaacQuery:"jumping jack" },
+        { palabras:["zancada","lunge","estocada"], img:"🏃", cat:"deportes", gramatica:"sustantivo", source:"ARASAAC", arasaacQuery:"zancada" },
+        { palabras:["cuerda de saltar","saltar a la comba","comba","cuerda"], img:"⏩", cat:"deportes", gramatica:"sustantivo", source:"ARASAAC", arasaacQuery:"saltar comba" },
+        { palabras:["barra de dominadas","dominadas","pull-up","jalones"], img:"🏋️", cat:"deportes", gramatica:"sustantivo", source:"ARASAAC", arasaacQuery:"dominadas" },
+        { palabras:["fondos","fondo de triceps","dips"], img:"💪", cat:"deportes", gramatica:"sustantivo", source:"ARASAAC", arasaacQuery:"ejercicio brazos" },
+        { palabras:["crunch","abdominal crunch","encogimiento abdominal"], img:"💪", cat:"deportes", gramatica:"sustantivo", source:"ARASAAC", arasaacQuery:"abdominales" },
+        { palabras:["cardio","entrenamiento cardiovascular","resistencia"], img:"❤️", cat:"deportes", gramatica:"sustantivo", source:"ARASAAC", arasaacQuery:"cardio" },
+        { palabras:["andar a paso rápido","caminar rápido","marcha"], img:"🚶", cat:"deportes", gramatica:"verbo", source:"ARASAAC", arasaacQuery:"marcha atlética" },
+        { palabras:["remo indoor","remar en máquina","rowing machine"], img:"🚣", cat:"deportes", gramatica:"sustantivo", source:"ARASAAC", arasaacQuery:"remo indoor" },
+        { palabras:["elíptica","máquina elíptica","ejercicio elíptica"], img:"🏃", cat:"deportes", gramatica:"sustantivo", source:"ARASAAC", arasaacQuery:"elíptica" },
+        { palabras:["cinta de correr","treadmill","corro en cinta"], img:"🏃", cat:"deportes", gramatica:"sustantivo", source:"ARASAAC", arasaacQuery:"cinta correr" },
+        
+        // ─── EQUIPO DEPORTIVO ─────────────────────────────────────────
+        { palabras:["pelota de fútbol","balón de fútbol"], img:"⚽", cat:"deportes", gramatica:"sustantivo", source:"ARASAAC", arasaacQuery:"balón de fútbol" },
+        { palabras:["raqueta","raqueta de tenis"], img:"🎾", cat:"deportes", gramatica:"sustantivo", source:"ARASAAC", arasaacQuery:"raqueta" },
+        { palabras:["palo de golf","club de golf"], img:"⛳", cat:"deportes", gramatica:"sustantivo", source:"ARASAAC", arasaacQuery:"palo de golf" },
+        { palabras:["guantes de boxeo","guante de boxeo"], img:"🥊", cat:"deportes", gramatica:"sustantivo", source:"ARASAAC", arasaacQuery:"guantes boxeo" },
+        { palabras:["casco","casco de ciclismo","casco de seguridad"], img:"⛑️", cat:"deportes", gramatica:"sustantivo", source:"ARASAAC", arasaacQuery:"casco" },
+        { palabras:["red de voley","red deportiva","portería"], img:"🥅", cat:"deportes", gramatica:"sustantivo", source:"ARASAAC", arasaacQuery:"red" },
+        { palabras:["piscina","pista de atletismo","campo de deportes","estadio"], img:"🏟️", cat:"deportes", gramatica:"sustantivo", source:"ARASAAC", arasaacQuery:"pista deportiva" },
+        { palabras:["cronómetro","tiempo de carrera","tiempo deportivo"], img:"⏱️", cat:"deportes", gramatica:"sustantivo", source:"ARASAAC", arasaacQuery:"cronómetro" },
+        
+        // ─── EVENTOS Y COMPETICIÓN ────────────────────────────────────
+        { palabras:["olimpiadas","juegos olímpicos","olimpismo"], img:"🥇", cat:"deportes", gramatica:"sustantivo", source:"ARASAAC", arasaacQuery:"olimpiadas" },
+        { palabras:["medalla","ganar medalla","medalla de oro"], img:"🏅", cat:"deportes", gramatica:"sustantivo", source:"ARASAAC", arasaacQuery:"medalla" },
+        { palabras:["trofeo","copa","ganar el trofeo","campeón"], img:"🏆", cat:"deportes", gramatica:"sustantivo", source:"ARASAAC", arasaacQuery:"trofeo" },
+        { palabras:["competición","competir","competencia","torneo"], img:"🏅", cat:"deportes", gramatica:"sustantivo", source:"ARASAAC", arasaacQuery:"competición" },
+        { palabras:["entrenador","entrenadora","coach","monitor deportivo"], img:"👨‍🏫", cat:"deportes", gramatica:"sustantivo", source:"ARASAAC", arasaacQuery:"entrenador" },
+        { palabras:["árbitro","referee","juez deportivo"], img:"🦺", cat:"deportes", gramatica:"sustantivo", source:"ARASAAC", arasaacQuery:"árbitro" },
+        { palabras:["equipo","equipo deportivo","compañeros de equipo"], img:"👥", cat:"deportes", gramatica:"sustantivo", source:"ARASAAC", arasaacQuery:"equipo deportivo" },
+        { palabras:["jugador","jugadora","atleta","deportista"], img:"🏅", cat:"deportes", gramatica:"sustantivo", source:"ARASAAC", arasaacQuery:"atleta" },
+        { palabras:["hincha","aficionado","fan","seguidor","barra brava"], img:"📣", cat:"deportes", gramatica:"sustantivo", source:"ARASAAC", arasaacQuery:"hincha" },
+        { palabras:["derrota","perder el partido","resultado negativo"], img:"😔", cat:"deportes", gramatica:"sustantivo", source:"ARASAAC", arasaacQuery:"derrota" },
+        { palabras:["victoria","ganar el partido","resultado positivo","triunfo"], img:"🏆", cat:"deportes", gramatica:"sustantivo", source:"ARASAAC", arasaacQuery:"victoria" },
+        { palabras:["marca personal","record personal","mejor marca"], img:"📈", cat:"deportes", gramatica:"sustantivo", source:"ARASAAC", arasaacQuery:"record" },
+        
+        // ─── BIENESTAR Y SALUD FÍSICA ────────────────────────────────
+        { palabras:["deporte","hacer deporte","actividad física","practicar deporte"], img:"🏅", cat:"deportes", gramatica:"sustantivo", source:"ARASAAC", arasaacQuery:"deporte" },
+        { palabras:["saludable","sano","fit","en forma","buena salud"], img:"💚", cat:"deportes", gramatica:"adjetivo", source:"ARASAAC", arasaacQuery:"saludable" },
+        { palabras:["agotamiento","agotado después del ejercicio","sin fuerzas"], img:"😫", cat:"deportes", gramatica:"sustantivo", source:"ARASAAC", arasaacQuery:"agotamiento" },
+        { palabras:["hidratación","beber agua después de ejercicio","agua deportiva"], img:"💧", cat:"deportes", gramatica:"sustantivo", source:"ARASAAC", arasaacQuery:"hidratación" },
+        { palabras:["proteína","batido de proteínas","suplemento"], img:"💊", cat:"deportes", gramatica:"sustantivo", source:"ARASAAC", arasaacQuery:"proteína" },
+        { palabras:["músculo","músculos","masa muscular"], img:"💪", cat:"deportes", gramatica:"sustantivo", source:"ARASAAC", arasaacQuery:"músculo" },
+        { palabras:["lesion","lesión deportiva","torcedura","esguince","rotura muscular"], img:"🩹", cat:"deportes", gramatica:"sustantivo", source:"ARASAAC", arasaacQuery:"lesión" },
+        { palabras:["fisioterapia","fisioterapeuta","rehabilitación deportiva"], img:"🩺", cat:"deportes", gramatica:"sustantivo", source:"ARASAAC", arasaacQuery:"fisioterapia" },
+        { palabras:["masaje","dar masaje","masaje muscular","relajar músculos"], img:"💆", cat:"deportes", gramatica:"sustantivo", source:"ARASAAC", arasaacQuery:"masaje" },
+        { palabras:["relajación","relajarse","descanso corporal"], img:"😌", cat:"deportes", gramatica:"sustantivo", source:"ARASAAC", arasaacQuery:"relajación" },
+        
+        // ─── DEPORTES ESPECIALES / PARALÍMPICOS ──────────────────────
+        { palabras:["deporte adaptado","deporte paralímpico","silla de ruedas deportiva"], img:"♿", cat:"deportes", gramatica:"sustantivo", source:"ARASAAC", arasaacQuery:"deporte adaptado" },
+        { palabras:["rugby en silla de ruedas","baloncesto en silla"], img:"🏀", cat:"deportes", gramatica:"sustantivo", source:"ARASAAC", arasaacQuery:"baloncesto silla de ruedas" },
+        { palabras:["natación adaptada","nadar con discapacidad"], img:"🏊", cat:"deportes", gramatica:"sustantivo", source:"ARASAAC", arasaacQuery:"natación adaptada" },
+        { palabras:["boccia","bocce","petanca"], img:"🎯", cat:"deportes", gramatica:"sustantivo", source:"ARASAAC", arasaacQuery:"boccia" },
+
+        // ─── DANZA Y ACTIVIDADES RÍTMICAS ────────────────────────────
+        { palabras:["ballet","danza clásica","bailarina de ballet","punta"], img:"🩰", cat:"deportes", gramatica:"sustantivo", source:"ARASAAC", arasaacQuery:"ballet" },
+        { palabras:["baile","danza","danzar","bailar con música"], img:"🕺", cat:"deportes", gramatica:"sustantivo", source:"ARASAAC", arasaacQuery:"baile", alternativas:[{source:"Mulberry",img:"💃"},{source:"Sclera",img:"🎵"}] },
+        { palabras:["flamenco","danza flamenca","zapateado"], img:"💃", cat:"deportes", gramatica:"sustantivo", source:"ARASAAC", arasaacQuery:"flamenco" },
+        { palabras:["hip hop","baile urbano","breakdance","street dance"], img:"🕺", cat:"deportes", gramatica:"sustantivo", source:"ARASAAC", arasaacQuery:"hip hop baile" },
+        { palabras:["salsa","merengue","cumbia","baile latino"], img:"💃", cat:"deportes", gramatica:"sustantivo", source:"ARASAAC", arasaacQuery:"salsa baile" },
+        { palabras:["contemporáneo","danza contemporánea"], img:"🤸", cat:"deportes", gramatica:"sustantivo", source:"ARASAAC", arasaacQuery:"danza contemporánea" },
+        { palabras:["ritmo","llevar el ritmo","al ritmo de la música"], img:"🎵", cat:"deportes", gramatica:"sustantivo", source:"ARASAAC", arasaacQuery:"ritmo" },
+        ];
+    }
+
+    // ═══════════════════════════════════════════════════════════════════
+    // _buildExtendedEntries — 300+ entradas adicionales de vocabulario
+    // ═══════════════════════════════════════════════════════════════════
+    _buildExtendedEntries() {
+        return [
+        // ─── PROFESIONES Y OFICIOS ────────────────────────────────────
+        { palabras:["abogado","abogada","letrado","jurista"], img:"⚖️", cat:"personas", gramatica:"sustantivo", source:"ARASAAC", arasaacQuery:"abogado" },
+        { palabras:["arquitecto","arquitecta","diseñar edificios"], img:"🏗️", cat:"personas", gramatica:"sustantivo", source:"ARASAAC", arasaacQuery:"arquitecto" },
+        { palabras:["astronauta","cosmonauta","explorador espacial"], img:"👨‍🚀", cat:"personas", gramatica:"sustantivo", source:"ARASAAC", arasaacQuery:"astronauta" },
+        { palabras:["camarero","camarera","mesero","mesera","mozo"], img:"🧑‍🍳", cat:"personas", gramatica:"sustantivo", source:"ARASAAC", arasaacQuery:"camarero" },
+        { palabras:["carpintero","carpintera","ebanista"], img:"🪚", cat:"personas", gramatica:"sustantivo", source:"ARASAAC", arasaacQuery:"carpintero" },
+        { palabras:["conductor","conductora","taxista","chofer"], img:"🚗", cat:"personas", gramatica:"sustantivo", source:"ARASAAC", arasaacQuery:"conductor" },
+        { palabras:["dentista","odontólogo","odontóloga"], img:"🦷", cat:"personas", gramatica:"sustantivo", source:"ARASAAC", arasaacQuery:"dentista" },
+        { palabras:["diseñador","diseñadora","artista gráfico","ilustrador"], img:"🎨", cat:"personas", gramatica:"sustantivo", source:"ARASAAC", arasaacQuery:"diseñador" },
+        { palabras:["electricista","electrico","técnico eléctrico"], img:"⚡", cat:"personas", gramatica:"sustantivo", source:"ARASAAC", arasaacQuery:"electricista" },
+        { palabras:["enfermero","enfermera","auxiliar de enfermería"], img:"👨‍⚕️", cat:"personas", gramatica:"sustantivo", source:"ARASAAC", arasaacQuery:"enfermero" },
+        { palabras:["fontanero","plomero","fontanera","plomera"], img:"🔧", cat:"personas", gramatica:"sustantivo", source:"ARASAAC", arasaacQuery:"fontanero" },
+        { palabras:["fotógrafo","fotografa","fotografia profesional"], img:"📷", cat:"personas", gramatica:"sustantivo", source:"ARASAAC", arasaacQuery:"fotógrafo" },
+        { palabras:["informático","programador","desarrollador","programadora","coder"], img:"💻", cat:"personas", gramatica:"sustantivo", source:"ARASAAC", arasaacQuery:"programador" },
+        { palabras:["ingeniero","ingeniera","técnico superior"], img:"⚙️", cat:"personas", gramatica:"sustantivo", source:"ARASAAC", arasaacQuery:"ingeniero" },
+        { palabras:["jardinero","jardinera","paisajista"], img:"🌱", cat:"personas", gramatica:"sustantivo", source:"ARASAAC", arasaacQuery:"jardinero" },
+        { palabras:["mecánico","mecánica","técnico de coches"], img:"🔧", cat:"personas", gramatica:"sustantivo", source:"ARASAAC", arasaacQuery:"mecánico" },
+        { palabras:["músico","músicos","instrumentista"], img:"🎸", cat:"personas", gramatica:"sustantivo", source:"ARASAAC", arasaacQuery:"músico" },
+        { palabras:["panadero","panadera","panadería"], img:"🥖", cat:"personas", gramatica:"sustantivo", source:"ARASAAC", arasaacQuery:"panadero" },
+        { palabras:["peluquero","peluquera","barbero","barbera"], img:"💇", cat:"personas", gramatica:"sustantivo", source:"ARASAAC", arasaacQuery:"peluquero" },
+        { palabras:["piloto","piloto de avión","aviador"], img:"👨‍✈️", cat:"personas", gramatica:"sustantivo", source:"ARASAAC", arasaacQuery:"piloto" },
+        { palabras:["pintor","pintora","pintor de paredes"], img:"🎨", cat:"personas", gramatica:"sustantivo", source:"ARASAAC", arasaacQuery:"pintor" },
+        { palabras:["psicólogo","psicóloga","terapeuta"], img:"🧠", cat:"personas", gramatica:"sustantivo", source:"ARASAAC", arasaacQuery:"psicólogo" },
+        { palabras:["científico","científica","investigador","laboratorio"], img:"🔬", cat:"personas", gramatica:"sustantivo", source:"ARASAAC", arasaacQuery:"científico" },
+        { palabras:["veterinario","veterinaria","vet"], img:"🐾", cat:"personas", gramatica:"sustantivo", source:"ARASAAC", arasaacQuery:"veterinario" },
+        
+        // ─── TECNOLOGÍA Y MEDIOS ─────────────────────────────────────
+        { palabras:["internet","red","wifi","conexión a internet","en línea"], img:"🌐", cat:"objetos", gramatica:"sustantivo", source:"ARASAAC", arasaacQuery:"internet" },
+        { palabras:["correo electrónico","email","mandar email","enviar correo"], img:"📧", cat:"objetos", gramatica:"sustantivo", source:"ARASAAC", arasaacQuery:"correo electrónico" },
+        { palabras:["redes sociales","instagram","facebook","twitter","tiktok"], img:"📱", cat:"objetos", gramatica:"sustantivo", source:"ARASAAC", arasaacQuery:"redes sociales" },
+        { palabras:["video","vídeo","grabación","filming","clip"], img:"📹", cat:"objetos", gramatica:"sustantivo", source:"ARASAAC", arasaacQuery:"vídeo" },
+        { palabras:["fotografía","foto","imagen","sacar foto","captura de pantalla"], img:"📷", cat:"objetos", gramatica:"sustantivo", source:"ARASAAC", arasaacQuery:"fotografía" },
+        { palabras:["altavoz","speaker","bocina","bafle"], img:"🔊", cat:"objetos", gramatica:"sustantivo", source:"ARASAAC", arasaacQuery:"altavoz" },
+        { palabras:["auriculares","cascos","earphones","headphones"], img:"🎧", cat:"objetos", gramatica:"sustantivo", source:"ARASAAC", arasaacQuery:"auriculares" },
+        { palabras:["micrófono","micro","microfono"], img:"🎤", cat:"objetos", gramatica:"sustantivo", source:"ARASAAC", arasaacQuery:"micrófono" },
+        { palabras:["radio","emisora","escuchar la radio"], img:"📻", cat:"objetos", gramatica:"sustantivo", source:"ARASAAC", arasaacQuery:"radio" },
+        { palabras:["impresora","imprimir","imprimir documento"], img:"🖨️", cat:"objetos", gramatica:"sustantivo", source:"ARASAAC", arasaacQuery:"impresora" },
+        { palabras:["ratón","mouse","ratón de ordenador"], img:"🖱️", cat:"objetos", gramatica:"sustantivo", source:"ARASAAC", arasaacQuery:"ratón ordenador" },
+        { palabras:["teclado","keyboard","teclado de ordenador"], img:"⌨️", cat:"objetos", gramatica:"sustantivo", source:"ARASAAC", arasaacQuery:"teclado" },
+        { palabras:["USB","pendrive","memoria USB","llave USB"], img:"💾", cat:"objetos", gramatica:"sustantivo", source:"ARASAAC", arasaacQuery:"pendrive" },
+        { palabras:["batería","pila","carga","cocinar eléctrico"], img:"🔋", cat:"objetos", gramatica:"sustantivo", source:"ARASAAC", arasaacQuery:"batería eléctrica" },
+        { palabras:["robot","androide","inteligencia artificial"], img:"🤖", cat:"objetos", gramatica:"sustantivo", source:"ARASAAC", arasaacQuery:"robot" },
+        
+        // ─── MÚSICA E INSTRUMENTOS ────────────────────────────────────
+        { palabras:["guitarra","guitarra eléctrica","tocar la guitarra"], img:"🎸", cat:"objetos", gramatica:"sustantivo", source:"ARASAAC", arasaacQuery:"guitarra" },
+        { palabras:["piano","tocar el piano","teclado musical"], img:"🎹", cat:"objetos", gramatica:"sustantivo", source:"ARASAAC", arasaacQuery:"piano" },
+        { palabras:["batería musical","batería de música","tambores","tocar la batería"], img:"🥁", cat:"objetos", gramatica:"sustantivo", source:"ARASAAC", arasaacQuery:"batería musical" },
+        { palabras:["violín","tocar el violín","cuerdas"], img:"🎻", cat:"objetos", gramatica:"sustantivo", source:"ARASAAC", arasaacQuery:"violín" },
+        { palabras:["trompeta","tocar la trompeta","viento metal"], img:"🎺", cat:"objetos", gramatica:"sustantivo", source:"ARASAAC", arasaacQuery:"trompeta" },
+        { palabras:["saxofón","saxo","tocar el saxo"], img:"🎷", cat:"objetos", gramatica:"sustantivo", source:"ARASAAC", arasaacQuery:"saxofón" },
+        { palabras:["flauta","tocar la flauta","flauta travesera"], img:"🎵", cat:"objetos", gramatica:"sustantivo", source:"ARASAAC", arasaacQuery:"flauta" },
+        { palabras:["música","escuchar música","melodía","canción"], img:"🎵", cat:"objetos", gramatica:"sustantivo", source:"ARASAAC", arasaacQuery:"música", alternativas:[{source:"Mulberry",img:"🎶"},{source:"Sclera",img:"🎼"}] },
+        { palabras:["nota musical","partitura","solfeo"], img:"🎼", cat:"objetos", gramatica:"sustantivo", source:"ARASAAC", arasaacQuery:"partitura" },
+        { palabras:["concierto","espectáculo musical","recital"], img:"🎸", cat:"objetos", gramatica:"sustantivo", source:"ARASAAC", arasaacQuery:"concierto" },
+        
+        // ─── ARTE Y CREATIVIDAD ───────────────────────────────────────
+        { palabras:["escultura","esculpir","clay","arcilla","modelado"], img:"🏺", cat:"objetos", gramatica:"sustantivo", source:"ARASAAC", arasaacQuery:"escultura" },
+        { palabras:["teatro","obra de teatro","dramatizar","actor","actriz"], img:"🎭", cat:"objetos", gramatica:"sustantivo", source:"ARASAAC", arasaacQuery:"teatro" },
+        { palabras:["fotografía artística","arte fotográfico","exposición de fotos"], img:"🖼️", cat:"objetos", gramatica:"sustantivo", source:"ARASAAC", arasaacQuery:"arte" },
+        { palabras:["collage","hacer un collage","recortar y pegar"], img:"📐", cat:"objetos", gramatica:"sustantivo", source:"ARASAAC", arasaacQuery:"collage" },
+        { palabras:["manualidades","manualidad","hacer manualidades","arte manual"], img:"✂️", cat:"objetos", gramatica:"sustantivo", source:"ARASAAC", arasaacQuery:"manualidades" },
+        { palabras:["punto","tejer","costura","coser","hilo"], img:"🧵", cat:"objetos", gramatica:"sustantivo", source:"ARASAAC", arasaacQuery:"costura" },
+        
+        // ─── MATERIAS ESCOLARES ───────────────────────────────────────
+        { palabras:["matemáticas","matematicas","mates","cálculo","algebra"], img:"🔢", cat:"objetos", gramatica:"sustantivo", source:"ARASAAC", arasaacQuery:"matemáticas" },
+        { palabras:["lengua","clase de lengua","gramática","redacción","literatura"], img:"📝", cat:"objetos", gramatica:"sustantivo", source:"ARASAAC", arasaacQuery:"lengua" },
+        { palabras:["inglés","ingles","clase de inglés","idioma inglés"], img:"🇬🇧", cat:"objetos", gramatica:"sustantivo", source:"ARASAAC", arasaacQuery:"inglés" },
+        { palabras:["ciencias naturales","ciencias","biología","naturaleza en clase"], img:"🔬", cat:"objetos", gramatica:"sustantivo", source:"ARASAAC", arasaacQuery:"ciencias naturales" },
+        { palabras:["historia","clase de historia","pasado histórico"], img:"📜", cat:"objetos", gramatica:"sustantivo", source:"ARASAAC", arasaacQuery:"historia" },
+        { palabras:["geografía","geografia","mapa","países"], img:"🗺️", cat:"objetos", gramatica:"sustantivo", source:"ARASAAC", arasaacQuery:"geografía" },
+        { palabras:["educación física","educación fisica","EF","PE","clase de deportes"], img:"🏅", cat:"objetos", gramatica:"sustantivo", source:"ARASAAC", arasaacQuery:"educación física" },
+        { palabras:["música en clase","clase de música","educación musical"], img:"🎵", cat:"objetos", gramatica:"sustantivo", source:"ARASAAC", arasaacQuery:"música escolar" },
+        { palabras:["plástica","educación plástica","arte en clase","dibujo en clase"], img:"🎨", cat:"objetos", gramatica:"sustantivo", source:"ARASAAC", arasaacQuery:"educación plástica" },
+        { palabras:["deberes","tarea escolar","homework","hacer los deberes"], img:"📚", cat:"objetos", gramatica:"sustantivo", source:"ARASAAC", arasaacQuery:"deberes" },
+        { palabras:["examen","prueba escolar","test","evaluación"], img:"📝", cat:"objetos", gramatica:"sustantivo", source:"ARASAAC", arasaacQuery:"examen" },
+        { palabras:["nota","calificación","aprobado","suspendido"], img:"📊", cat:"objetos", gramatica:"sustantivo", source:"ARASAAC", arasaacQuery:"calificación" },
+        { palabras:["recreo","descanso escolar","patio del recreo"], img:"🛝", cat:"objetos", gramatica:"sustantivo", source:"ARASAAC", arasaacQuery:"recreo" },
+        
+        // ─── EMOCIONES AVANZADAS ─────────────────────────────────────
+        { palabras:["ilusión","tener ilusión","emocionado con algo","esperanza"], img:"✨", cat:"emociones", gramatica:"sustantivo", source:"ARASAAC", arasaacQuery:"ilusión" },
+        { palabras:["decepción","decepcionado","desilusionado","me ha decepcionado"], img:"😞", cat:"emociones", gramatica:"sustantivo", source:"ARASAAC", arasaacQuery:"decepcionado" },
+        { palabras:["rabia","tener rabia","mucha rabia","rabioso"], img:"😤", cat:"emociones", gramatica:"sustantivo", source:"ARASAAC", arasaacQuery:"rabia" },
+        { palabras:["frustración","frustrado","frustradísimo"], img:"😤", cat:"emociones", gramatica:"sustantivo", source:"ARASAAC", arasaacQuery:"frustración" },
+        { palabras:["nostalgia","añoranza","echo de menos","extrañar"], img:"😢", cat:"emociones", gramatica:"sustantivo", source:"ARASAAC", arasaacQuery:"nostalgia" },
+        { palabras:["curiosidad","curioso","curiosa","tengo curiosidad"], img:"🤔", cat:"emociones", gramatica:"sustantivo", source:"ARASAAC", arasaacQuery:"curiosidad" },
+        { palabras:["confianza","confiar","confiado","me siento seguro"], img:"💪", cat:"emociones", gramatica:"sustantivo", source:"ARASAAC", arasaacQuery:"confianza" },
+        { palabras:["alivio","aliviado","me siento aliviado","por fin"], img:"😮‍💨", cat:"emociones", gramatica:"sustantivo", source:"ARASAAC", arasaacQuery:"alivio" },
+        { palabras:["entusiasmo","entusiasmado","con ganas","emocionado con las ganas"], img:"🤩", cat:"emociones", gramatica:"sustantivo", source:"ARASAAC", arasaacQuery:"entusiasmo" },
+        { palabras:["timidez","tímido","vergüenza de hablar","me da vergüenza con gente"], img:"😳", cat:"emociones", gramatica:"sustantivo", source:"ARASAAC", arasaacQuery:"timidez" },
+        
+        // ─── SALUD Y CUERPO ───────────────────────────────────────────
+        { palabras:["alergia","alérgico","alérgica","reacción alérgica"], img:"🤧", cat:"emociones", gramatica:"sustantivo", source:"ARASAAC", arasaacQuery:"alergia" },
+        { palabras:["asma","inhalador","dificultad respirar"], img:"💊", cat:"emociones", gramatica:"sustantivo", source:"ARASAAC", arasaacQuery:"asma" },
+        { palabras:["gripe","resfriado","catarro","estar acatarrado"], img:"🤒", cat:"emociones", gramatica:"sustantivo", source:"ARASAAC", arasaacQuery:"gripe" },
+        { palabras:["fiebre","temperatura","tener fiebre","termómetro"], img:"🌡️", cat:"objetos", gramatica:"sustantivo", source:"ARASAAC", arasaacQuery:"fiebre" },
+        { palabras:["pastilla","tableta","medicamento","tomar pastilla"], img:"💊", cat:"objetos", gramatica:"sustantivo", source:"ARASAAC", arasaacQuery:"pastilla" },
+        { palabras:["jarabe","medicina líquida","tomar jarabe"], img:"🍶", cat:"objetos", gramatica:"sustantivo", source:"ARASAAC", arasaacQuery:"jarabe" },
+        { palabras:["inyección","vacuna","pincharse","ir al médico vacuna"], img:"💉", cat:"objetos", gramatica:"sustantivo", source:"ARASAAC", arasaacQuery:"inyección" },
+        { palabras:["venda","vendaje","poner una venda","curita"], img:"🩹", cat:"objetos", gramatica:"sustantivo", source:"ARASAAC", arasaacQuery:"venda" },
+        { palabras:["cirugía","operación","quirófano","ir al quirófano"], img:"🔬", cat:"objetos", gramatica:"sustantivo", source:"ARASAAC", arasaacQuery:"cirugía" },
+        { palabras:["silla de ruedas","wheelchair","movilidad reducida"], img:"♿", cat:"objetos", gramatica:"sustantivo", source:"ARASAAC", arasaacQuery:"silla de ruedas" },
+        { palabras:["muleta","apoyo ortopédico","caminar con muletas"], img:"🩼", cat:"objetos", gramatica:"sustantivo", source:"ARASAAC", arasaacQuery:"muleta" },
+        { palabras:["gafas auditivas","audífono","sordera","no oír bien"], img:"🦻", cat:"objetos", gramatica:"sustantivo", source:"ARASAAC", arasaacQuery:"audífono" },
+        
+        // ─── VIAJES Y TRANSPORTE ─────────────────────────────────────
+        { palabras:["viaje","viajar","ir de viaje","excursión","trip"], img:"🧳", cat:"lugares", gramatica:"sustantivo", source:"ARASAAC", arasaacQuery:"viaje" },
+        { palabras:["maleta","bolsa de viaje","hacer la maleta"], img:"🧳", cat:"lugares", gramatica:"sustantivo", source:"ARASAAC", arasaacQuery:"maleta" },
+        { palabras:["pasaporte","documento de viaje"], img:"🛂", cat:"lugares", gramatica:"sustantivo", source:"ARASAAC", arasaacQuery:"pasaporte" },
+        { palabras:["hotel","hostal","alojamiento","dormir en hotel","habitación hotel"], img:"🏨", cat:"lugares", gramatica:"sustantivo", source:"ARASAAC", arasaacQuery:"hotel" },
+        { palabras:["mapa","plano","orientarse","callejero","GPS"], img:"🗺️", cat:"objetos", gramatica:"sustantivo", source:"ARASAAC", arasaacQuery:"mapa" },
+        { palabras:["semáforo","luz de tráfico","cruzar por el semáforo"], img:"🚦", cat:"objetos", gramatica:"sustantivo", source:"ARASAAC", arasaacQuery:"semáforo" },
+        { palabras:["carretera","autopista","autovía","vía"], img:"🛣️", cat:"objetos", gramatica:"sustantivo", source:"ARASAAC", arasaacQuery:"carretera" },
+        { palabras:["aparcamiento","parking","aparcar el coche"], img:"🅿️", cat:"lugares", gramatica:"sustantivo", source:"ARASAAC", arasaacQuery:"aparcamiento" },
+        { palabras:["estación de tren","estación","andén"], img:"🚉", cat:"lugares", gramatica:"sustantivo", source:"ARASAAC", arasaacQuery:"estación de tren" },
+        { palabras:["parada de autobús","parar el autobús","esperar el bus"], img:"🚏", cat:"lugares", gramatica:"sustantivo", source:"ARASAAC", arasaacQuery:"parada de autobús" },
+        
+        // ─── COMIDA AVANZADA ─────────────────────────────────────────
+        { palabras:["ensalada","ensalada verde","lechuga con tomate"], img:"🥗", cat:"alimentos", gramatica:"sustantivo", source:"ARASAAC", arasaacQuery:"ensalada" },
+        { palabras:["paella","arroz con mariscos","arroz valenciano"], img:"🥘", cat:"alimentos", gramatica:"sustantivo", source:"ARASAAC", arasaacQuery:"paella" },
+        { palabras:["cocido","puchero","olla","guiso"], img:"🍲", cat:"alimentos", gramatica:"sustantivo", source:"ARASAAC", arasaacQuery:"cocido" },
+        { palabras:["gazpacho","sopa fría","salmorejo"], img:"🍲", cat:"alimentos", gramatica:"sustantivo", source:"ARASAAC", arasaacQuery:"gazpacho" },
+        { palabras:["tortilla española","tortilla patatas","tortilla de patatas"], img:"🍳", cat:"alimentos", gramatica:"sustantivo", source:"ARASAAC", arasaacQuery:"tortilla española" },
+        { palabras:["croquetas","croqueta","fritura"], img:"🥘", cat:"alimentos", gramatica:"sustantivo", source:"ARASAAC", arasaacQuery:"croquetas" },
+        { palabras:["bocadillo","bocata","emparedado","sándwich mixto"], img:"🥪", cat:"alimentos", gramatica:"sustantivo", source:"ARASAAC", arasaacQuery:"bocadillo" },
+        { palabras:["churros","chocolate con churros","porras"], img:"🍩", cat:"alimentos", gramatica:"sustantivo", source:"ARASAAC", arasaacQuery:"churros" },
+        { palabras:["flan","natillas","pudding","postre frío"], img:"🍮", cat:"alimentos", gramatica:"sustantivo", source:"ARASAAC", arasaacQuery:"flan" },
+        { palabras:["aceite","aceite de oliva","aceite vegetal"], img:"🫙", cat:"alimentos", gramatica:"sustantivo", source:"ARASAAC", arasaacQuery:"aceite" },
+        { palabras:["sal","pimienta","condimento","especias"], img:"🧂", cat:"alimentos", gramatica:"sustantivo", source:"ARASAAC", arasaacQuery:"sal" },
+        { palabras:["vinagre","aliño","aliñar la ensalada"], img:"🫙", cat:"alimentos", gramatica:"sustantivo", source:"ARASAAC", arasaacQuery:"vinagre" },
+        { palabras:["azúcar","azucar","endulzar"], img:"🍬", cat:"alimentos", gramatica:"sustantivo", source:"ARASAAC", arasaacQuery:"azúcar" },
+        { palabras:["harina","masa","amasar"], img:"🥣", cat:"alimentos", gramatica:"sustantivo", source:"ARASAAC", arasaacQuery:"harina" },
+        { palabras:["frutos secos","nueces","almendras","cacahuetes","pistachos"], img:"🥜", cat:"alimentos", gramatica:"sustantivo", source:"ARASAAC", arasaacQuery:"frutos secos" },
+        { palabras:["pavo","turkey","pavo navideño"], img:"🦃", cat:"alimentos", gramatica:"sustantivo", source:"ARASAAC", arasaacQuery:"pavo" },
+        { palabras:["marisco","langosta","cangrejo","gambas","mejillones"], img:"🦞", cat:"alimentos", gramatica:"sustantivo", source:"ARASAAC", arasaacQuery:"marisco" },
+        
+        // ─── HIGIENE Y RUTINAS ────────────────────────────────────────
+        { palabras:["crema","pomada","crema hidratante","ponerse crema"], img:"🧴", cat:"objetos", gramatica:"sustantivo", source:"ARASAAC", arasaacQuery:"crema" },
+        { palabras:["desodorante","antitranspirante","ponerse desodorante"], img:"🧴", cat:"objetos", gramatica:"sustantivo", source:"ARASAAC", arasaacQuery:"desodorante" },
+        { palabras:["afeitarse","maquinilla","rasurar"], img:"🪒", cat:"acciones", gramatica:"verbo", source:"ARASAAC", arasaacQuery:"afeitarse" },
+        { palabras:["maquillaje","pintarse","maquillarse","pintalabios"], img:"💄", cat:"objetos", gramatica:"sustantivo", source:"ARASAAC", arasaacQuery:"maquillaje" },
+        { palabras:["cepillo de pelo","cepillo del pelo","peineta"], img:"💇", cat:"objetos", gramatica:"sustantivo", source:"ARASAAC", arasaacQuery:"cepillo pelo" },
+        { palabras:["reciclar","reciclaje","cubo de reciclaje","separar basura"], img:"♻️", cat:"acciones", gramatica:"verbo", source:"ARASAAC", arasaacQuery:"reciclar" },
+        { palabras:["basura","cubo de basura","tirar a la basura","lata"], img:"🗑️", cat:"objetos", gramatica:"sustantivo", source:"ARASAAC", arasaacQuery:"basura" },
+        
+        // ─── NATURALEZA EXTENDIDA ─────────────────────────────────────
+        { palabras:["animales de la granja","granja","corral"], img:"🐄", cat:"lugares", gramatica:"sustantivo", source:"ARASAAC", arasaacQuery:"granja" },
+        { palabras:["jardín","huerto","cultivar","plantar"], img:"🌱", cat:"lugares", gramatica:"sustantivo", source:"ARASAAC", arasaacQuery:"jardín" },
+        { palabras:["insecto","bicho","cucaracha","mosca"], img:"🐛", cat:"objetos", gramatica:"sustantivo", source:"ARASAAC", arasaacQuery:"insecto" },
+        { palabras:["cielo","firmamento","astronomía"], img:"🌌", cat:"objetos", gramatica:"sustantivo", source:"ARASAAC", arasaacQuery:"cielo" },
+        { palabras:["planeta","marte","júpiter","sistema solar"], img:"🪐", cat:"objetos", gramatica:"sustantivo", source:"ARASAAC", arasaacQuery:"planeta" },
+        { palabras:["espacio","universo","cosmos","galaxia","vía láctea"], img:"🌌", cat:"objetos", gramatica:"sustantivo", source:"ARASAAC", arasaacQuery:"espacio exterior" },
+        { palabras:["terremoto","tsunami","catástrofe natural","erupción"], img:"🌋", cat:"objetos", gramatica:"sustantivo", source:"ARASAAC", arasaacQuery:"terremoto" },
+        { palabras:["arrecife","coral","fondo del mar"], img:"🪸", cat:"objetos", gramatica:"sustantivo", source:"ARASAAC", arasaacQuery:"arrecife" },
+        
+        // ─── CONCEPTOS ABSTRACTOS Y CAA ───────────────────────────────
+        { palabras:["diferente","distinto","no igual","otro diferente"], img:"🔀", cat:"otros", gramatica:"adjetivo", source:"ARASAAC", arasaacQuery:"diferente" },
+        { palabras:["igual","mismo","idéntico","parecido"], img:"🟰", cat:"otros", gramatica:"adjetivo", source:"ARASAAC", arasaacQuery:"igual" },
+        { palabras:["porque","razón","motivo","el porqué"], img:"❓", cat:"otros", gramatica:"conector", source:"ARASAAC", arasaacQuery:"porque" },
+        { palabras:["pero","sin embargo","aunque","excepto que"], img:"↔️", cat:"otros", gramatica:"conector", source:"ARASAAC", arasaacQuery:"pero" },
+        { palabras:["y","además","y también","con","junto a"], img:"➕", cat:"otros", gramatica:"conector", source:"ARASAAC", arasaacQuery:"y" },
+        { palabras:["o","o bien","opciones","elegir entre"], img:"🔀", cat:"otros", gramatica:"conector", source:"ARASAAC", arasaacQuery:"o" },
+        { palabras:["si condicional","si puedo","si quiero","condición"], img:"🔀", cat:"otros", gramatica:"conector", source:"ARASAAC", arasaacQuery:"si condicional" },
+        { palabras:["verdad","cierto","es verdad","no mentira"], img:"✅", cat:"otros", gramatica:"otro", source:"ARASAAC", arasaacQuery:"verdad" },
+        { palabras:["mentira","falso","no es verdad","engaño"], img:"❌", cat:"otros", gramatica:"otro", source:"ARASAAC", arasaacQuery:"mentira" },
+        { palabras:["pregunta","hacer una pregunta","tengo una duda"], img:"❓", cat:"otros", gramatica:"sustantivo", source:"ARASAAC", arasaacQuery:"pregunta" },
+        { palabras:["respuesta","contestar","la respuesta es"], img:"💬", cat:"otros", gramatica:"sustantivo", source:"ARASAAC", arasaacQuery:"respuesta" },
+        { palabras:["norma","regla","cumplir las normas","reglas del juego"], img:"📋", cat:"otros", gramatica:"sustantivo", source:"ARASAAC", arasaacQuery:"norma" },
+        { palabras:["turno","esperar turno","es mi turno","me toca"], img:"🔢", cat:"otros", gramatica:"sustantivo", source:"ARASAAC", arasaacQuery:"turno" },
+        { palabras:["cambio","cambiar","alternativa","otra opción"], img:"🔄", cat:"otros", gramatica:"sustantivo", source:"ARASAAC", arasaacQuery:"cambio" },
+        { palabras:["problema","hay un problema","surgió un problema"], img:"⚠️", cat:"otros", gramatica:"sustantivo", source:"ARASAAC", arasaacQuery:"problema" },
+        { palabras:["solución","resolver","encontrar la solución"], img:"💡", cat:"otros", gramatica:"sustantivo", source:"ARASAAC", arasaacQuery:"solución" },
+        { palabras:["dinero","euro","dólares","moneda","billete"], img:"💶", cat:"objetos", gramatica:"sustantivo", source:"ARASAAC", arasaacQuery:"dinero" },
+        { palabras:["barato","económico","precio bajo","oferta","ganga"], img:"💰", cat:"objetos", gramatica:"adjetivo", source:"ARASAAC", arasaacQuery:"barato" },
+        { palabras:["caro","precio alto","costoso","muy caro"], img:"💸", cat:"objetos", gramatica:"adjetivo", source:"ARASAAC", arasaacQuery:"caro" },
+        ];
+    }
+
+    // ═══════════════════════════════════════════════════════════════════
     // _buildMassiveWordMap: construye el mapa masivo de palabras
     // palabra_normalizada → consulta ARASAAC
     // Este mapa da acceso a 12.000+ pictogramas reales cuando online
@@ -1412,6 +1779,710 @@ class DictModel {
         return results.filter(r => { const k = r.img; if (seen.has(k)) return false; seen.add(k); return true; });
     }
 
+    // ═══════════════════════════════════════════════════════════════════
+    // INTEGRACIÓN MULTI-FUENTE: Open Symbols, Mulberry, Sclera, Plena
+    // ═══════════════════════════════════════════════════════════════════
+
+    // ─────────────────────────────────────────────────────────────────
+    // _buildEsEnMap: mapa español → inglés para consultar fuentes
+    // principalmente en inglés (Open Symbols, Mulberry, Sclera)
+    // ─────────────────────────────────────────────────────────────────
+    _buildEsEnMap() {
+        return {
+            // VERBOS FUNDAMENTALES
+            'ser':'be','estar':'be','tener':'have','haber':'have',
+            'ir':'go','venir':'come','hacer':'do','poder':'can',
+            'querer':'want','saber':'know','ver':'see','dar':'give',
+            'decir':'say','poner':'put','salir':'go out','volver':'return',
+            'tomar':'take','llegar':'arrive','pasar':'pass','seguir':'follow',
+            'encontrar':'find','pensar':'think','sentir':'feel','vivir':'live',
+            'hablar':'talk','llevar':'carry','dejar':'leave','parecer':'seem',
+            'quedar':'stay','creer':'believe','traer':'bring','conocer':'know',
+            'perder':'lose','ganar':'win','esperar':'wait','cumplir':'fulfill',
+            // VERBOS DE ACCIÓN
+            'comer':'eat','beber':'drink','dormir':'sleep','caminar':'walk',
+            'correr':'run','saltar':'jump','nadar':'swim','bailar':'dance',
+            'cantar':'sing','jugar':'play','trabajar':'work','estudiar':'study',
+            'leer':'read','escribir':'write','dibujar':'draw','pintar':'paint',
+            'cocinar':'cook','limpiar':'clean','comprar':'buy','pagar':'pay',
+            'llamar':'call','escuchar':'listen','mirar':'look','tocar':'touch',
+            'abrazar':'hug','besar':'kiss','reir':'laugh','llorar':'cry',
+            'gritar':'shout','ayudar':'help','compartir':'share','pedir':'ask',
+            'abrir':'open','cerrar':'close','subir':'go up','bajar':'go down',
+            'entrar':'enter','salir':'exit','buscar':'search','encontrar':'find',
+            'encender':'turn on','apagar':'turn off','cortar':'cut',
+            'ducharse':'shower','bañarse':'bathe','lavarse':'wash',
+            'vestirse':'get dressed','desvestirse':'undress',
+            'peinarse':'comb hair','cepillarse':'brush',
+            'despertarse':'wake up','levantarse':'get up','acostarse':'go to bed',
+            'sentarse':'sit down','pararse':'stand up',
+            'desayunar':'eat breakfast','almorzar':'eat lunch','cenar':'eat dinner',
+            'respirar':'breathe','toser':'cough','vomitar':'vomit',
+            'curar':'heal','tomar medicina':'take medicine',
+            'acariciar':'stroke','señalar':'point','tirar':'throw',
+            'atrapar':'catch','empujar':'push','jalar':'pull',
+            'girar':'turn','caer':'fall','volar':'fly',
+            // VERBOS DE EMOCIÓN/ESTADO
+            'querer':'love','amar':'love','odiar':'hate',
+            'gustar':'like','preferir':'prefer','necesitar':'need',
+            // SUSTANTIVOS — PERSONAS
+            'persona':'person','hombre':'man','mujer':'woman',
+            'niño':'boy','niña':'girl','bebe':'baby','adulto':'adult',
+            'mama':'mother','papa':'father','madre':'mother','padre':'father',
+            'hermano':'brother','hermana':'sister',
+            'abuelo':'grandfather','abuela':'grandmother',
+            'tio':'uncle','tia':'aunt','primo':'cousin','prima':'cousin',
+            'amigo':'friend','amiga':'friend',
+            'familia':'family','pareja':'couple',
+            'maestra':'teacher','maestro':'teacher',
+            'medico':'doctor','enfermera':'nurse',
+            'policia':'police','bombero':'firefighter',
+            'cocinero':'cook','dentista':'dentist',
+            // SUSTANTIVOS — ANIMALES
+            'perro':'dog','gato':'cat','pajaro':'bird','pez':'fish',
+            'conejo':'rabbit','tortuga':'turtle','hamster':'hamster',
+            'vaca':'cow','caballo':'horse','cerdo':'pig','oveja':'sheep',
+            'pollo':'chicken','gallina':'hen','pato':'duck',
+            'leon':'lion','tigre':'tiger','oso':'bear',
+            'elefante':'elephant','jirafa':'giraffe','mono':'monkey',
+            'serpiente':'snake','rana':'frog','pinguino':'penguin',
+            'delfin':'dolphin','ballena':'whale','tiburon':'shark',
+            'mariposa':'butterfly','abeja':'bee','arana':'spider',
+            'hormiga':'ant','caracol':'snail','loro':'parrot',
+            'buho':'owl','aguila':'eagle','dinosaurio':'dinosaur',
+            // SUSTANTIVOS — ALIMENTOS FRUTAS
+            'manzana':'apple','pera':'pear','naranja':'orange',
+            'limon':'lemon','platano':'banana','sandia':'watermelon',
+            'melon':'melon','uva':'grape','fresa':'strawberry',
+            'melocoton':'peach','mango':'mango','pina':'pineapple',
+            'kiwi':'kiwi','aguacate':'avocado','cereza':'cherry',
+            'arandano':'blueberry','mora':'blackberry','ciruela':'plum',
+            // VERDURAS
+            'zanahoria':'carrot','tomate':'tomato','lechuga':'lettuce',
+            'pepino':'cucumber','pimiento':'pepper','cebolla':'onion',
+            'ajo':'garlic','patata':'potato','brocoli':'broccoli',
+            'maiz':'corn','espinaca':'spinach','calabaza':'pumpkin',
+            'champiñon':'mushroom','guisante':'pea','judias':'beans',
+            // COMIDAS Y BEBIDAS
+            'carne':'meat','pollo asado':'roast chicken','pescado':'fish',
+            'huevo':'egg','leche':'milk','queso':'cheese','yogur':'yogurt',
+            'pan':'bread','pasta':'pasta','arroz':'rice','sopa':'soup',
+            'pizza':'pizza','hamburguesa':'hamburger','sandwich':'sandwich',
+            'tarta':'cake','galleta':'cookie','chocolate':'chocolate',
+            'helado':'ice cream','caramelo':'candy','miel':'honey',
+            'agua':'water','zumo':'juice','refresco':'soda','te':'tea',
+            'cafe':'coffee','leche chocolateada':'chocolate milk',
+            // ROPA Y ACCESORIOS
+            'camiseta':'t-shirt','camisa':'shirt','pantalon':'trousers',
+            'falda':'skirt','vestido':'dress','abrigo':'coat',
+            'jersey':'sweater','zapatos':'shoes','calcetines':'socks',
+            'pijama':'pyjamas','gorra':'hat','bufanda':'scarf',
+            'guantes':'gloves','mochila':'backpack','bolso':'bag',
+            'gafas':'glasses','cinturon':'belt','corbata':'tie',
+            // HOGAR
+            'casa':'house','habitacion':'bedroom','cocina':'kitchen',
+            'bano':'bathroom','salon':'living room',
+            'cama':'bed','mesa':'table','silla':'chair','sofa':'sofa',
+            'puerta':'door','ventana':'window','lampara':'lamp',
+            'television':'television','ordenador':'computer',
+            'movil':'mobile phone','nevera':'fridge',
+            'lavadora':'washing machine','horno':'oven',
+            'jabon':'soap','toalla':'towel','inodoro':'toilet',
+            'banera':'bathtub','ducha':'shower',
+            // ÚTILES Y JUGUETES
+            'lapiz':'pencil','boligrafo':'pen','cuaderno':'notebook',
+            'libro':'book','tijeras':'scissors','regla':'ruler',
+            'pinturas':'crayons','pizarra':'blackboard',
+            'pelota':'ball','muñeca':'doll','peluche':'teddy bear',
+            'puzzle':'puzzle','videojuego':'video game',
+            'bicicleta':'bicycle','columpio':'swing','tobogan':'slide',
+            'globo':'balloon','cometa':'kite',
+            // TRANSPORTES
+            'coche':'car','autobus':'bus','metro':'subway','tren':'train',
+            'avion':'airplane','barco':'boat','moto':'motorcycle',
+            'taxi':'taxi','ambulancia':'ambulance','bicicleta':'bicycle',
+            'helicoptero':'helicopter','cohete':'rocket',
+            // NATURALEZA Y CLIMA
+            'sol':'sun','luna':'moon','estrella':'star','nube':'cloud',
+            'lluvia':'rain','nieve':'snow','viento':'wind',
+            'tormenta':'storm','arcoiris':'rainbow',
+            'arbol':'tree','flor':'flower','hierba':'grass','hoja':'leaf',
+            'mar':'sea','rio':'river','lago':'lake',
+            'montana':'mountain','desierto':'desert','bosque':'forest',
+            'fuego':'fire','tierra':'earth',
+            // LUGARES
+            'colegio':'school','parque':'park','hospital':'hospital',
+            'tienda':'shop','playa':'beach','piscina':'pool',
+            'ciudad':'city','biblioteca':'library','farmacia':'pharmacy',
+            'restaurante':'restaurant','zoo':'zoo','cine':'cinema',
+            'aeropuerto':'airport','iglesia':'church','museo':'museum',
+            'estadio':'stadium','gimnasio':'gym','teatro':'theatre',
+            // EMOCIONES
+            'feliz':'happy','triste':'sad','enfadado':'angry',
+            'asustado':'scared','sorprendido':'surprised',
+            'nervioso':'nervous','cansado':'tired','aburrido':'bored',
+            'hambre':'hungry','sed':'thirsty','dolor':'pain',
+            'calor':'hot','frio':'cold','tranquilo':'calm',
+            'orgulloso':'proud','verguenza':'embarrassed',
+            'solitario':'lonely','confundido':'confused',
+            'enfermo':'sick','sano':'healthy','emocionado':'excited',
+            // ADJETIVOS
+            'grande':'big','pequeño':'small','largo':'long','corto':'short',
+            'alto':'tall','bajo':'short','gordo':'fat','delgado':'thin',
+            'bonito':'beautiful','feo':'ugly','nuevo':'new','viejo':'old',
+            'limpio':'clean','sucio':'dirty','rapido':'fast','lento':'slow',
+            'lleno':'full','vacio':'empty','duro':'hard','blando':'soft',
+            'caliente':'hot','frio':'cold','abierto':'open','cerrado':'closed',
+            // COLORES
+            'rojo':'red','azul':'blue','verde':'green','amarillo':'yellow',
+            'naranja':'orange','morado':'purple','rosa':'pink','negro':'black',
+            'blanco':'white','gris':'grey','marron':'brown','dorado':'gold',
+            // NÚMEROS
+            'cero':'zero','uno':'one','dos':'two','tres':'three',
+            'cuatro':'four','cinco':'five','seis':'six','siete':'seven',
+            'ocho':'eight','nueve':'nine','diez':'ten',
+            'mucho':'many','poco':'few','todo':'all','nada':'nothing',
+            // TIEMPO
+            'hoy':'today','manana':'tomorrow','ayer':'yesterday',
+            'ahora':'now','antes':'before','despues':'after',
+            'siempre':'always','nunca':'never','mañana tiempo':'morning',
+            'tarde':'afternoon','noche':'night',
+            'lunes':'monday','martes':'tuesday','miercoles':'wednesday',
+            'jueves':'thursday','viernes':'friday','sabado':'saturday',
+            'domingo':'sunday','semana':'week','mes':'month','año':'year',
+            'primavera':'spring','verano':'summer','otono':'autumn','invierno':'winter',
+            // COMUNICACIÓN CAA
+            'si':'yes','no':'no','hola':'hello','adios':'goodbye',
+            'gracias':'thank you','por favor':'please','perdon':'sorry',
+            'ayuda':'help','mas':'more','parar':'stop','espera':'wait',
+            'bien':'good','mal':'bad','mio':'mine','tuyo':'yours',
+            'aqui':'here','alli':'there','tambien':'also',
+            // BODY
+            'cabeza':'head','cara':'face','ojo':'eye','nariz':'nose',
+            'boca':'mouth','diente':'tooth','oreja':'ear','pelo':'hair',
+            'brazo':'arm','mano':'hand','dedo':'finger','barriga':'belly',
+            'corazon':'heart','pierna':'leg','pie':'foot','sangre':'blood',
+            // CELEBRACIONES
+            'cumpleaños':'birthday','navidad':'christmas','fiesta':'party',
+            'vacaciones':'holidays','regalo':'gift',
+            // ESPACIALES
+            'encima':'on top','debajo':'under','dentro':'inside',
+            'fuera':'outside','cerca':'near','lejos':'far',
+            'delante':'in front','detras':'behind',
+            'derecha':'right','izquierda':'left','arriba':'up','abajo':'down',
+        };
+    }
+
+    // ─────────────────────────────────────────────────────────────────
+    // getEnglishQuery: traduce palabra española a inglés para usar
+    // con fuentes en inglés (Mulberry, Sclera, Open Symbols)
+    // ─────────────────────────────────────────────────────────────────
+    getEnglishQuery(spanishWord) {
+        const normalized = this.normalizeString(spanishWord);
+        return this._esEnMap[normalized] || spanishWord;
+    }
+
+    // ─────────────────────────────────────────────────────────────────
+    // _buildMulberryDirectMap: URLs directas de Mulberry Symbols CDN
+    // para los 300 conceptos CAA más frecuentes
+    // Fuente: d18vdu4p71yql0.cloudfront.net/libraries/mulberry/
+    // ─────────────────────────────────────────────────────────────────
+    _buildMulberryDirectMap() {
+        const BASE = 'https://d18vdu4p71yql0.cloudfront.net/libraries/mulberry/';
+        return {
+            // COMUNICACIÓN CAA
+            'yes': BASE+'yes.svg',
+            'no': BASE+'no.svg',
+            'help': BASE+'help.svg',
+            'stop': BASE+'stop.svg',
+            'more': BASE+'more.svg',
+            'want': BASE+'I+want.svg',
+            'please': BASE+'please.svg',
+            'thank you': BASE+'thank+you.svg',
+            'hello': BASE+'hello.svg',
+            'goodbye': BASE+'goodbye.svg',
+            'sorry': BASE+'sorry.svg',
+            'wait': BASE+'wait.svg',
+            'good': BASE+'good.svg',
+            'bad': BASE+'bad.svg',
+            'finished': BASE+'finished.svg',
+            // VERBOS ACCIONES
+            'eat': BASE+'eat.svg',
+            'drink': BASE+'drink.svg',
+            'sleep': BASE+'sleep.svg',
+            'play': BASE+'play.svg',
+            'walk': BASE+'walk.svg',
+            'run': BASE+'run.svg',
+            'jump': BASE+'jump.svg',
+            'swim': BASE+'swim.svg',
+            'dance': BASE+'dance.svg',
+            'sing': BASE+'sing.svg',
+            'work': BASE+'work.svg',
+            'study': BASE+'study.svg',
+            'read': BASE+'read.svg',
+            'write': BASE+'write.svg',
+            'draw': BASE+'draw.svg',
+            'paint': BASE+'paint.svg',
+            'cook': BASE+'cook.svg',
+            'wash': BASE+'wash.svg',
+            'shower': BASE+'shower.svg',
+            'brush teeth': BASE+'brush+teeth.svg',
+            'comb hair': BASE+'brush+hair.svg',
+            'get dressed': BASE+'get+dressed.svg',
+            'go to bed': BASE+'go+to+bed.svg',
+            'wake up': BASE+'wake+up.svg',
+            'sit down': BASE+'sit+down.svg',
+            'stand up': BASE+'stand+up.svg',
+            'listen': BASE+'listen.svg',
+            'look': BASE+'look.svg',
+            'touch': BASE+'touch.svg',
+            'hug': BASE+'hug.svg',
+            'laugh': BASE+'laugh.svg',
+            'cry': BASE+'cry.svg',
+            'talk': BASE+'talk.svg',
+            'go': BASE+'go.svg',
+            'come': BASE+'come.svg',
+            'open': BASE+'open.svg',
+            'close': BASE+'close.svg',
+            'buy': BASE+'buy.svg',
+            'give': BASE+'give.svg',
+            'share': BASE+'share.svg',
+            'put on': BASE+'put+on.svg',
+            'take off': BASE+'take+off.svg',
+            'call': BASE+'telephone.svg',
+            'turn on': BASE+'turn+on.svg',
+            'turn off': BASE+'turn+off.svg',
+            'cut': BASE+'cut.svg',
+            'throw': BASE+'throw.svg',
+            'catch': BASE+'catch.svg',
+            'push': BASE+'push.svg',
+            'pull': BASE+'pull.svg',
+            'fall': BASE+'fall+over.svg',
+            // PERSONAS Y FAMILIA
+            'person': BASE+'person.svg',
+            'man': BASE+'man.svg',
+            'woman': BASE+'woman.svg',
+            'boy': BASE+'boy.svg',
+            'girl': BASE+'girl.svg',
+            'baby': BASE+'baby.svg',
+            'mother': BASE+'mother.svg',
+            'father': BASE+'father.svg',
+            'brother': BASE+'brother.svg',
+            'sister': BASE+'sister.svg',
+            'grandfather': BASE+'grandfather.svg',
+            'grandmother': BASE+'grandmother.svg',
+            'uncle': BASE+'uncle.svg',
+            'aunt': BASE+'aunt.svg',
+            'friend': BASE+'friend.svg',
+            'family': BASE+'family.svg',
+            'teacher': BASE+'teacher.svg',
+            'doctor': BASE+'doctor.svg',
+            'nurse': BASE+'nurse.svg',
+            'police': BASE+'policeman.svg',
+            'firefighter': BASE+'fireman.svg',
+            // ANIMALES
+            'dog': BASE+'dog.svg',
+            'cat': BASE+'cat.svg',
+            'bird': BASE+'bird.svg',
+            'fish': BASE+'fish.svg',
+            'rabbit': BASE+'rabbit.svg',
+            'turtle': BASE+'tortoise.svg',
+            'cow': BASE+'cow.svg',
+            'horse': BASE+'horse.svg',
+            'pig': BASE+'pig.svg',
+            'sheep': BASE+'sheep.svg',
+            'chicken': BASE+'chicken.svg',
+            'duck': BASE+'duck.svg',
+            'lion': BASE+'lion.svg',
+            'tiger': BASE+'tiger.svg',
+            'bear': BASE+'bear.svg',
+            'elephant': BASE+'elephant.svg',
+            'giraffe': BASE+'giraffe.svg',
+            'monkey': BASE+'monkey.svg',
+            'snake': BASE+'snake.svg',
+            'frog': BASE+'frog.svg',
+            'penguin': BASE+'penguin.svg',
+            'dolphin': BASE+'dolphin.svg',
+            'butterfly': BASE+'butterfly.svg',
+            // ALIMENTOS — FRUTAS
+            'apple': BASE+'apple.svg',
+            'pear': BASE+'pear.svg',
+            'orange': BASE+'orange.svg',
+            'lemon': BASE+'lemon.svg',
+            'banana': BASE+'banana.svg',
+            'watermelon': BASE+'watermelon.svg',
+            'grape': BASE+'grapes.svg',
+            'strawberry': BASE+'strawberry.svg',
+            'peach': BASE+'peach.svg',
+            'mango': BASE+'mango.svg',
+            'pineapple': BASE+'pineapple.svg',
+            'kiwi': BASE+'kiwi.svg',
+            'cherry': BASE+'cherry.svg',
+            // VERDURAS
+            'carrot': BASE+'carrot.svg',
+            'tomato': BASE+'tomato.svg',
+            'lettuce': BASE+'lettuce.svg',
+            'cucumber': BASE+'cucumber.svg',
+            'onion': BASE+'onion.svg',
+            'potato': BASE+'potato.svg',
+            'corn': BASE+'corn.svg',
+            'mushroom': BASE+'mushroom.svg',
+            'pea': BASE+'peas.svg',
+            // COMIDAS Y BEBIDAS
+            'meat': BASE+'meat.svg',
+            'fish food': BASE+'fish.svg',
+            'egg': BASE+'egg.svg',
+            'milk': BASE+'milk.svg',
+            'cheese': BASE+'cheese.svg',
+            'bread': BASE+'bread.svg',
+            'pasta': BASE+'pasta.svg',
+            'rice': BASE+'rice.svg',
+            'soup': BASE+'soup.svg',
+            'pizza': BASE+'pizza.svg',
+            'hamburger': BASE+'hamburger.svg',
+            'sandwich': BASE+'sandwich.svg',
+            'cake': BASE+'cake.svg',
+            'cookie': BASE+'biscuit.svg',
+            'chocolate': BASE+'chocolate.svg',
+            'ice cream': BASE+'ice+cream.svg',
+            'candy': BASE+'sweets.svg',
+            'water': BASE+'water.svg',
+            'juice': BASE+'juice.svg',
+            'soda': BASE+'cola.svg',
+            'tea': BASE+'tea.svg',
+            'coffee': BASE+'coffee.svg',
+            // ROPA
+            't-shirt': BASE+'t-shirt.svg',
+            'shirt': BASE+'shirt.svg',
+            'trousers': BASE+'trousers.svg',
+            'dress': BASE+'dress.svg',
+            'coat': BASE+'coat.svg',
+            'sweater': BASE+'jumper.svg',
+            'shoes': BASE+'shoes.svg',
+            'socks': BASE+'socks.svg',
+            'pyjamas': BASE+'pyjamas.svg',
+            'hat': BASE+'hat.svg',
+            'scarf': BASE+'scarf.svg',
+            'gloves': BASE+'gloves.svg',
+            'backpack': BASE+'rucksack.svg',
+            'glasses': BASE+'glasses.svg',
+            // HOGAR
+            'house': BASE+'house.svg',
+            'bedroom': BASE+'bedroom.svg',
+            'kitchen': BASE+'kitchen.svg',
+            'bathroom': BASE+'bathroom.svg',
+            'living room': BASE+'living+room.svg',
+            'bed': BASE+'bed.svg',
+            'table': BASE+'table.svg',
+            'chair': BASE+'chair.svg',
+            'sofa': BASE+'sofa.svg',
+            'door': BASE+'door.svg',
+            'window': BASE+'window.svg',
+            'lamp': BASE+'lamp.svg',
+            'television': BASE+'television.svg',
+            'computer': BASE+'computer.svg',
+            'mobile phone': BASE+'mobile+phone.svg',
+            'toilet': BASE+'toilet.svg',
+            // ÚTILES
+            'pencil': BASE+'pencil.svg',
+            'pen': BASE+'pen.svg',
+            'notebook': BASE+'book.svg',
+            'book': BASE+'book.svg',
+            'scissors': BASE+'scissors.svg',
+            'crayons': BASE+'colouring+pens.svg',
+            'ball': BASE+'ball.svg',
+            'teddy bear': BASE+'teddy+bear.svg',
+            'bicycle': BASE+'bike.svg',
+            'swing': BASE+'swing.svg',
+            'balloon': BASE+'balloon.svg',
+            // TRANSPORTES
+            'car': BASE+'car.svg',
+            'bus': BASE+'bus.svg',
+            'subway': BASE+'underground.svg',
+            'train': BASE+'train.svg',
+            'airplane': BASE+'aeroplane.svg',
+            'boat': BASE+'boat.svg',
+            'motorcycle': BASE+'motorbike.svg',
+            'taxi': BASE+'taxi.svg',
+            'ambulance': BASE+'ambulance.svg',
+            // NATURALEZA
+            'sun': BASE+'sun.svg',
+            'moon': BASE+'moon.svg',
+            'star': BASE+'star.svg',
+            'cloud': BASE+'cloud.svg',
+            'rain': BASE+'rain.svg',
+            'snow': BASE+'snow.svg',
+            'wind': BASE+'wind.svg',
+            'rainbow': BASE+'rainbow.svg',
+            'tree': BASE+'tree.svg',
+            'flower': BASE+'flower.svg',
+            'sea': BASE+'sea.svg',
+            'fire': BASE+'fire.svg',
+            // LUGARES
+            'school': BASE+'school.svg',
+            'park': BASE+'park.svg',
+            'hospital': BASE+'hospital.svg',
+            'shop': BASE+'shop.svg',
+            'beach': BASE+'beach.svg',
+            'pool': BASE+'swimming+pool.svg',
+            'library': BASE+'library.svg',
+            'restaurant': BASE+'restaurant.svg',
+            'zoo': BASE+'zoo.svg',
+            'cinema': BASE+'cinema.svg',
+            'airport': BASE+'airport.svg',
+            // EMOCIONES
+            'happy': BASE+'happy.svg',
+            'sad': BASE+'sad.svg',
+            'angry': BASE+'angry.svg',
+            'scared': BASE+'scared.svg',
+            'surprised': BASE+'surprised.svg',
+            'tired': BASE+'tired.svg',
+            'bored': BASE+'bored.svg',
+            'hungry': BASE+'hungry.svg',
+            'thirsty': BASE+'thirsty.svg',
+            'pain': BASE+'pain.svg',
+            'sick': BASE+'ill.svg',
+            'calm': BASE+'calm.svg',
+            'excited': BASE+'excited.svg',
+            // COLORES
+            'red': BASE+'red.svg',
+            'blue': BASE+'blue.svg',
+            'green': BASE+'green.svg',
+            'yellow': BASE+'yellow.svg',
+            'orange color': BASE+'orange+(colour).svg',
+            'purple': BASE+'purple.svg',
+            'pink': BASE+'pink.svg',
+            'black': BASE+'black.svg',
+            'white': BASE+'white.svg',
+            'brown': BASE+'brown.svg',
+            // CUERPO
+            'head': BASE+'head.svg',
+            'face': BASE+'face.svg',
+            'eye': BASE+'eye.svg',
+            'nose': BASE+'nose.svg',
+            'mouth': BASE+'mouth.svg',
+            'ear': BASE+'ear.svg',
+            'hair': BASE+'hair.svg',
+            'arm': BASE+'arm.svg',
+            'hand': BASE+'hand.svg',
+            'finger': BASE+'finger.svg',
+            'leg': BASE+'leg.svg',
+            'foot': BASE+'foot.svg',
+            'heart': BASE+'heart.svg',
+            // TIEMPO
+            'today': BASE+'today.svg',
+            'tomorrow': BASE+'tomorrow.svg',
+            'yesterday': BASE+'yesterday.svg',
+            'morning': BASE+'morning.svg',
+            'afternoon': BASE+'afternoon.svg',
+            'night': BASE+'night.svg',
+            'monday': BASE+'Monday.svg',
+            'tuesday': BASE+'Tuesday.svg',
+            'wednesday': BASE+'Wednesday.svg',
+            'thursday': BASE+'Thursday.svg',
+            'friday': BASE+'Friday.svg',
+            'saturday': BASE+'Saturday.svg',
+            'sunday': BASE+'Sunday.svg',
+            // NÚMEROS
+            'one': BASE+'1.svg', 'two': BASE+'2.svg', 'three': BASE+'3.svg',
+            'four': BASE+'4.svg', 'five': BASE+'5.svg', 'six': BASE+'6.svg',
+            'seven': BASE+'7.svg', 'eight': BASE+'8.svg',
+            'nine': BASE+'9.svg', 'ten': BASE+'10.svg',
+            // CELEBRACIONES
+            'birthday': BASE+'birthday.svg',
+            'christmas': BASE+'christmas.svg',
+            'party': BASE+'party.svg',
+            'gift': BASE+'present.svg',
+        };
+    }
+
+    // ─────────────────────────────────────────────────────────────────
+    // getMulberryUrl: devuelve URL directa de Mulberry Symbols CDN
+    // si existe para el concepto en inglés dado
+    // ─────────────────────────────────────────────────────────────────
+    getMulberryUrl(englishWord) {
+        if (!this._mulberryMap) this._mulberryMap = this._buildMulberryDirectMap();
+        return this._mulberryMap[englishWord.toLowerCase()] || null;
+    }
+
+    // ─────────────────────────────────────────────────────────────────
+    // loadOpenSymbolsImages: consulta la API pública de Open Symbols
+    // que agrega Mulberry, Sclera, SymbolStix, PCS y más en un solo endpoint.
+    // API: https://www.opensymbols.org/api/v1/symbols/search
+    // Free to use, no auth needed (access_token=0secret0 = public)
+    // Devuelve array: [{ source, imgUrl, license }]
+    // ─────────────────────────────────────────────────────────────────
+    async loadOpenSymbolsImages(spanishWord, maxPerSource = 3) {
+        const englishWord = this.getEnglishQuery(spanishWord);
+        const cacheKey = `opensym_${englishWord}`;
+
+        // 1. Caché en memoria
+        if (this._imgCache[cacheKey]) return this._imgCache[cacheKey];
+
+        // 2. Caché en localStorage
+        try {
+            const stored = localStorage.getItem(cacheKey);
+            if (stored) {
+                const parsed = JSON.parse(stored);
+                this._imgCache[cacheKey] = parsed;
+                return parsed;
+            }
+        } catch(e) { /* localStorage lleno o corrupto */ }
+
+        const results = [];
+
+        // 3. Intentar Mulberry CDN directo primero (más confiable)
+        const mulberryUrl = this.getMulberryUrl(englishWord);
+        if (mulberryUrl) {
+            results.push({ source: 'Mulberry', imgUrl: mulberryUrl, license: 'CC BY-SA 2.0' });
+        }
+
+        // 4. Consultar Open Symbols API (Mulberry + Sclera + SymbolStix + más)
+        try {
+            const encoded = encodeURIComponent(englishWord);
+            // locale=es para preferir pictogramas en español cuando estén disponibles
+            const apiUrl = `https://www.opensymbols.org/api/v1/symbols/search?q=${encoded}&access_token=0secret0&safe=true&limit=20`;
+            const resp = await fetch(apiUrl, { signal: AbortSignal.timeout(6000) });
+
+            if (resp.ok) {
+                const data = await resp.json();
+
+                // Mapa de repo_key a nombre legible
+                const SOURCE_NAMES = {
+                    'mulberry':    'Mulberry',
+                    'sclera':      'Sclera',
+                    'arasaac':     'ARASAAC',
+                    'symbolstix':  'SymbolStix',
+                    'lessonpix':   'LessonPix',
+                    'pcs':         'PCS',
+                    'tawasol':     'Tawasol',
+                    'snap':        'SNAP',
+                };
+
+                // Contar cuántos por fuente hemos añadido
+                const sourceCount = {};
+
+                data.forEach(sym => {
+                    if (!sym.image_url) return;
+
+                    const source = SOURCE_NAMES[sym.repo_key] || sym.repo_key || 'Open Symbols';
+
+                    // Saltar si ya tenemos muchos de esta fuente
+                    sourceCount[source] = (sourceCount[source] || 0) + 1;
+                    if (sourceCount[source] > maxPerSource) return;
+
+                    // Evitar duplicados por URL
+                    if (results.find(r => r.imgUrl === sym.image_url)) return;
+
+                    // Evitar añadir un Mulberry que ya tenemos del CDN directo
+                    if (source === 'Mulberry' && mulberryUrl) return;
+
+                    results.push({
+                        source,
+                        imgUrl: sym.image_url,
+                        license: sym.license || sym.license_url || 'Open',
+                    });
+                });
+            }
+        } catch(e) {
+            // Sin conexión o timeout — usar Mulberry CDN directo que ya tenemos
+            console.info('[DictModel] Open Symbols offline, using direct CDN:', englishWord);
+        }
+
+        // 5. Guardar en caché si hay resultados
+        if (results.length > 0) {
+            this._imgCache[cacheKey] = results;
+            try {
+                localStorage.setItem(cacheKey, JSON.stringify(results));
+            } catch(e) {
+                // localStorage lleno: limpiar entradas antiguas
+                try {
+                    const toDelete = Object.keys(localStorage)
+                        .filter(k => k.startsWith('opensym_'))
+                        .slice(0, 50);
+                    toDelete.forEach(k => localStorage.removeItem(k));
+                    localStorage.setItem(cacheKey, JSON.stringify(results));
+                } catch(e2) { /* ignorar */ }
+            }
+        }
+
+        return results;
+    }
+
+    // ─────────────────────────────────────────────────────────────────
+    // loadGlobalSymbolsImages: consulta la API de Global Symbols
+    // que agrega: ARASAAC, Mulberry, Snap Core First, SymbolStix,
+    // PCS Boardmaker, Tawasol y muchos conjuntos más.
+    // API: https://globalsymbols.com/api/v1/labels/search
+    // Libre y gratuita. Devuelve array [{ source, imgUrl }]
+    // ─────────────────────────────────────────────────────────────────
+    async loadGlobalSymbolsImages(spanishWord) {
+        const searchTerm = this.getEnglishQuery(spanishWord);
+        const cacheKey = `globalsym_${searchTerm}`;
+
+        if (this._imgCache[cacheKey]) return this._imgCache[cacheKey];
+
+        try {
+            const stored = localStorage.getItem(cacheKey);
+            if (stored) {
+                const parsed = JSON.parse(stored);
+                this._imgCache[cacheKey] = parsed;
+                return parsed;
+            }
+        } catch(e) {}
+
+        const results = [];
+        const seenIds = new Set();
+
+        try {
+            const queries = [
+                `https://globalsymbols.com/api/v1/labels/search/?term=${encodeURIComponent(spanishWord)}&language=es&limit=8`,
+            ];
+            if (searchTerm !== spanishWord) {
+                queries.push(`https://globalsymbols.com/api/v1/labels/search/?term=${encodeURIComponent(searchTerm)}&language=en&limit=8`);
+            }
+
+            const responses = await Promise.allSettled(
+                queries.map(url => fetch(url, { signal: AbortSignal.timeout(6000) }))
+            );
+
+            for (const res of responses) {
+                if (res.status !== 'fulfilled' || !res.value.ok) continue;
+                const data = await res.value.json();
+                if (!data.results) continue;
+
+                data.results.forEach(item => {
+                    const picto = item.picto;
+                    if (!picto || !picto.image_url) return;
+                    if (seenIds.has(picto.id)) return;
+                    seenIds.add(picto.id);
+                    results.push({
+                        source: picto.symbolset?.name || 'Global Symbols',
+                        imgUrl: picto.image_url,
+                        license: picto.license?.url || 'CC BY-SA',
+                    });
+                });
+            }
+        } catch(e) {
+            console.info('[DictModel] Global Symbols offline:', spanishWord);
+        }
+
+        if (results.length > 0) {
+            this._imgCache[cacheKey] = results;
+            try {
+                localStorage.setItem(cacheKey, JSON.stringify(results.slice(0, 6)));
+            } catch(e) {
+                try {
+                    Object.keys(localStorage).filter(k => k.startsWith('globalsym_')).slice(0, 30)
+                        .forEach(k => localStorage.removeItem(k));
+                    localStorage.setItem(cacheKey, JSON.stringify(results.slice(0, 6)));
+                } catch(e2) {}
+            }
+        }
+
+        return results;
+    }
+
     // ─────────────────────────────────────────────────────────────────
     // generateAIPictogram: genera SVG via OpenRouter (solo para palabras
     // extremadamente raras no encontradas en ninguna fuente)
@@ -1434,3 +2505,4 @@ class DictModel {
         } catch(e) { console.error('[DictModel] AI error:', e); throw e; }
     }
 }
+

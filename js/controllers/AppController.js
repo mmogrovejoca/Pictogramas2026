@@ -222,6 +222,88 @@ class AppController {
                 await new Promise(res => setTimeout(res, 200));
             }
         }
+
+        // Después de cargar ARASAAC, lanzar carga multi-fuente en background
+        // (Open Symbols: Mulberry + Sclera + SymbolStix + más)
+        setTimeout(() => this.triggerMultiSourceLoading(container), 1500);
+    }
+
+    // ─────────────────────────────────────────────────────────────────
+    // triggerMultiSourceLoading
+    // Carga alternativas visuales desde Open Symbols API para cada
+    // pictograma renderizado, dando acceso a:
+    //  • Mulberry Symbols (~3.500 SVGs escalables, CC BY-SA 2.0)
+    //  • Sclera Pictograms (~13.000 pictogramas B&N, CC BY)
+    //  • SymbolStix (pictogramas de personas, comercial-free tier)
+    //  • Open Symbols (repositorio global agregado)
+    // ─────────────────────────────────────────────────────────────────
+    async triggerMultiSourceLoading(container) {
+        if (!navigator.onLine) return;
+
+        const elements = container
+            ? container.querySelectorAll('.pictogram[data-arasaac-query]')
+            : document.querySelectorAll('.pictogram[data-arasaac-query]');
+
+        const arr = Array.from(elements);
+        if (arr.length === 0) return;
+
+        // Ocultar el indicador de multi-fuente (se añade abajo)
+        const statusEl = document.getElementById('typing-status');
+        if (statusEl) statusEl.textContent = `Cargando alternativas Mulberry + Sclera...`;
+
+        let loadedCount = 0;
+
+        // Procesar de a dos para no sobrecargar la API pública
+        const BATCH = 2;
+        for (let i = 0; i < arr.length; i += BATCH) {
+            const batch = arr.slice(i, i + BATCH);
+            await Promise.all(batch.map(async (el) => {
+                // No recargar si ya tenemos alternativas de otras fuentes
+                if (el.dataset.multiSrcLoaded) return;
+                el.dataset.multiSrcLoaded = 'pending';
+
+                const query = el.dataset.arasaacQuery;
+
+                // Consultar Open Symbols + Global Symbols en paralelo
+                // para máxima cobertura de fuentes
+                const [openSymAlts, globalAlts] = await Promise.all([
+                    this.dictModel.loadOpenSymbolsImages(query),
+                    this.dictModel.loadGlobalSymbolsImages(query),
+                ]);
+
+                // Combinar ambas listas sin duplicar por imgUrl
+                const seenUrls = new Set();
+                const alts = [...openSymAlts, ...globalAlts].filter(a => {
+                    if (!a.imgUrl || seenUrls.has(a.imgUrl)) return false;
+                    seenUrls.add(a.imgUrl);
+                    return true;
+                });
+
+                if (alts && alts.length > 0) {
+                    this.view.addAlternativesToPictogram(el, alts, (altImg, altSource) => {
+                        this.handleAlternativeSelect(query, altImg, altSource, el);
+                    });
+                    el.dataset.multiSrcLoaded = 'true';
+                    loadedCount++;
+                } else {
+                    el.dataset.multiSrcLoaded = 'none';
+                }
+            }));
+
+            // Respetar rate limits de Open Symbols (free tier)
+            if (i + BATCH < arr.length) {
+                await new Promise(res => setTimeout(res, 300));
+            }
+        }
+
+        if (statusEl) {
+            statusEl.textContent = loadedCount > 0
+                ? `✓ ${loadedCount} alternativas Mulberry/Sclera cargadas`
+                : `12.000+ pictogramas disponibles`;
+            setTimeout(() => {
+                if (statusEl) statusEl.textContent = `12.000+ pictogramas disponibles`;
+            }, 3000);
+        }
     }
 
     speakText(text) {

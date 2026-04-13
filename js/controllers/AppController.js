@@ -128,6 +128,10 @@ class AppController {
                 this.view.appendPictogramToGenerator(el);
             }
         });
+
+        // Disparar carga progresiva ARASAAC en segundo plano
+        const genContainer = document.getElementById('pictogram-output');
+        requestAnimationFrame(() => this.triggerArasaacLoading(genContainer));
     }
 
     async triggerAIGeneration(word, domElement) {
@@ -168,6 +172,56 @@ class AppController {
         this.dictModel.saveUserPreference(normalizedWord, { img: altImg, source: altSource });
         // Actualizar imagen en el DOM sin re-renderizar todo
         this.view.updatePictogramImage(domElement, altImg, altSource);
+    }
+
+    // ─────────────────────────────────────────────────────────────
+    // triggerArasaacLoading
+    // Para cada pictograma en el contenedor que aún no tenga imagen ARASAAC:
+    // 1. Muestra spinner sutil
+    // 2. Consulta la API pública de ARASAAC (12.000+ pictogramas)
+    // 3. Actualiza la imagen de forma progresiva sin parpadeos
+    // 4. Guarda en localStorage para la próxima vez (funciona offline)
+    // ─────────────────────────────────────────────────────────────
+    async triggerArasaacLoading(container) {
+        if (!navigator.onLine) return;  // sin conexión, mantener emojis
+
+        const elements = container
+            ? container.querySelectorAll('.pictogram[data-arasaac-query]:not([data-arasaac-loaded])')
+            : document.querySelectorAll('.pictogram[data-arasaac-query]:not([data-arasaac-loaded])');
+
+        // Procesar en lotes pequeños para no saturar la API
+        const BATCH_SIZE = 5;
+        const arr = Array.from(elements);
+
+        for (let i = 0; i < arr.length; i += BATCH_SIZE) {
+            const batch = arr.slice(i, i + BATCH_SIZE);
+            await Promise.all(batch.map(async (el) => {
+                const query = el.dataset.arasaacQuery;
+                el.dataset.arasaacLoaded = 'pending';
+
+                // Añadir spinner de carga sutil
+                const spinner = document.createElement('div');
+                spinner.className = 'arasaac-loading-indicator';
+                el.appendChild(spinner);
+
+                const imgUrl = await this.dictModel.loadArasaacImage(query);
+
+                spinner.remove();
+
+                if (imgUrl) {
+                    this.view.updatePictogramWithArasaac(el, imgUrl);
+                    el.dataset.arasaacLoaded = 'true';
+                    el.dataset.source = 'ARASAAC';
+                } else {
+                    el.dataset.arasaacLoaded = 'offline';
+                }
+            }));
+
+            // Pequeña pausa entre lotes para respetar rate limits de la API
+            if (i + BATCH_SIZE < arr.length) {
+                await new Promise(res => setTimeout(res, 200));
+            }
+        }
     }
 
     speakText(text) {

@@ -3,14 +3,15 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Comunicador Visual TEA</title>
-    <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>🌟</text></svg>">
-    <link href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;700;800&display=swap" rel="stylesheet">
+    <title>Comunicador Visual TEA — 12.000+ Pictogramas</title>
+    <meta name="description" content="Sistema CAA/TEA profesional con más de 12.000 pictogramas ARASAAC, offline-first, para comunicación aumentativa y alternativa.">
+    <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>🗣️</text></svg>">
+    <link href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;600;700;800;900&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="css/style.css">
 </head>
 <body>
     <header>
-        <h1>🌟 Comunicador Visual</h1>
+        <h1>🗣️ Comunicador Visual <span class="app-badge">v3.0</span></h1>
         <nav>
             <button class="tab-btn active" onclick="switchTab('generator')">💬 Generador</button>
             <button class="tab-btn" onclick="switchTab('library')">📚 Biblioteca</button>
@@ -26,7 +27,11 @@
         <!-- Sección 1: Generador -->
         <section id="generator" class="tab-content active">
             <div class="input-area">
-                <textarea id="text-input" placeholder="Escribe aquí para generar pictogramas..." spellcheck="false"></textarea>
+            <div class="input-header">
+                    <span class="input-header-title">✍️ Escribe una frase</span>
+                    <span class="input-status" id="typing-status">12.000+ pictogramas disponibles</span>
+                </div>
+                <textarea id="text-input" placeholder="Ej: Quiero comer manzana roja con mamá..." spellcheck="false"></textarea>
                 <div class="controls">
                     <button id="generate-btn" class="action-btn">✨ Generar Pictogramas</button>
                     <button id="speak-btn" class="action-btn speak">🗣️ Hablar</button>

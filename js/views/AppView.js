@@ -332,6 +332,13 @@ class AppView {
         div.dataset.category = data.cat;
         div.dataset.gramatica = data.gramatica || 'otro';
         div.dataset.source = data.source || 'ARASAAC';
+        // data-arasaac-query permite la carga progresiva de imagen real
+        if (data.arasaacQuery) div.dataset.arasaacQuery = data.arasaacQuery;
+        else {
+            // Intentar usar el primer término del diccionario ARASAAC masivo
+            const firstWord = data.palabras && data.palabras[0] ? data.palabras[0] : '';
+            if (firstWord) div.dataset.arasaacQuery = firstWord;
+        }
         if (isDraggable) {
             div.draggable = true;
             div.ondragstart = window.drag;
@@ -427,6 +434,26 @@ class AppView {
     appendPictogramToGenerator(el) {
         const container = document.getElementById('picto-output');
         if(container) container.appendChild(el);
+    }
+
+    // updatePictogramWithArasaac: Sustituye el emoji/SVG inicial por la imagen
+    // real de ARASAAC descargada progresivamente. Usa animación fade-in suave.
+    updatePictogramWithArasaac(domElement, imgUrl) {
+        const imgContainer = domElement.querySelector('.picto-img');
+        if (!imgContainer) return;
+
+        // Crear img con transición suave
+        const img = document.createElement('img');
+        img.className = 'loading';
+        img.alt = domElement.querySelector('.picto-label')?.textContent || '';
+
+        img.onload = () => {
+            imgContainer.innerHTML = '';
+            img.className = 'loaded';
+            imgContainer.appendChild(img);
+        };
+        img.onerror = () => { /* mantener emoji si falla */ };
+        img.src = imgUrl;
     }
 
     // Actualiza solo la imagen de un pictograma ya renderizado

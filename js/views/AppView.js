@@ -300,15 +300,31 @@ class AppView {
         const imgContainer = document.createElement('div');
         imgContainer.className = 'picto-img';
 
-        if (data.img.startsWith('data:image')) {
-            const img = document.createElement('img');
-            img.src = data.img;
-            img.alt = displayWord;
-            imgContainer.appendChild(img);
-        } else if (data.img.startsWith('<svg')) {
-            imgContainer.innerHTML = data.img;
-        } else {
-            imgContainer.textContent = data.img;
+        if (data.isPlural) {
+            imgContainer.classList.add('plural-img');
+        }
+
+        const renderContent = () => {
+            if (data.img.startsWith('data:image')) {
+                const img = document.createElement('img');
+                img.src = data.img;
+                img.alt = displayWord;
+                return img;
+            } else if (data.img.startsWith('<svg')) {
+                const svgWrap = document.createElement('div');
+                svgWrap.className = 'svg-wrapper';
+                svgWrap.innerHTML = data.img;
+                return svgWrap;
+            } else {
+                const textNode = document.createElement('span');
+                textNode.textContent = data.img;
+                return textNode;
+            }
+        };
+
+        imgContainer.appendChild(renderContent());
+        if (data.isPlural) {
+            imgContainer.appendChild(renderContent());
         }
 
         const labelContainer = document.createElement('div');

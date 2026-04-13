@@ -3,6 +3,14 @@ class DictModel {
         this.stateModel = stateModel;
         const diccionario = [
 
+    { palabras: ["perro", "can", "cachorro", "guau"], img: "🐕", cat: "objetos", source: "ARASAAC" },
+    { palabras: ["gato", "felino", "miau"], img: "🐈", cat: "objetos", source: "Mulberry" },
+    { palabras: ["manzana"], img: "🍎", cat: "alimentos", source: "ARASAAC" },
+    { palabras: ["pera"], img: "🍐", cat: "alimentos", source: "ARASAAC" },
+    { palabras: ["parque", "plaza", "jardin"], img: "🏞️", cat: "lugares", source: "ARASAAC" },
+    { palabras: ["casa", "hogar", "vivienda", "piso"], img: "🏠", cat: "lugares", source: "ARASAAC" },
+
+
     { palabras: ["vivir", "residir", "habitar"], img: "🏠", cat: "acciones", source: "ARASAAC" },
     { palabras: ["traer", "llevar", "portar"], img: "🤲", cat: "acciones", source: "ARASAAC" },
     { palabras: ["caer", "tropezar", "resbalar"], img: "🤕", cat: "acciones", source: "Plena Inclusión" },
@@ -205,25 +213,49 @@ class DictModel {
         };
 
         baseDict.forEach(entry => {
-            const newWords = new Set();
+            const singularWords = new Set();
+            const pluralWords = new Set();
 
             entry.palabras.forEach(word => {
-                newWords.add(word);
-
                 // Do not conjugate or pluralize multi-word phrases for safety
                 if (word.includes(' ')) return;
 
                 if (entry.cat === 'acciones') {
-                    conjugateVerbs(word).forEach(w => newWords.add(w));
+                    const forms = conjugateVerbs(word);
+                    forms.forEach(w => {
+                        if (w.endsWith('mos') || w.endsWith('is') || w.endsWith('an') || w.endsWith('en')) {
+                            pluralWords.add(w);
+                        } else {
+                            singularWords.add(w);
+                        }
+                    });
+
                 } else if (['objetos', 'personas', 'lugares', 'alimentos', 'emociones'].includes(entry.cat)) {
-                    newWords.add(pluralize(word));
+                    // Check if the word is already plural in the base dict
+                    if (word.endsWith('s') && !word.endsWith('is') && !word.endsWith('as')) {
+                        pluralWords.add(word);
+                    } else {
+                        singularWords.add(word);
+                        pluralWords.add(pluralize(word));
+                    }
+                } else {
+                    singularWords.add(word);
                 }
             });
 
             expandedDict.push({
                 ...entry,
-                palabras: Array.from(newWords)
+                palabras: Array.from(singularWords),
+                isPlural: false
             });
+
+            if (pluralWords.size > 0) {
+                expandedDict.push({
+                    ...entry,
+                    palabras: Array.from(pluralWords),
+                    isPlural: true
+                });
+            }
         });
 
         return expandedDict;

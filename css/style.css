@@ -257,6 +257,7 @@ textarea:focus {
 .action-btn.speak { background: var(--secondary-gradient); color: white; }
 .action-btn.clear { background: linear-gradient(135deg, #ff9a9e 0%, #fecfef 99%, #fecfef 100%); color: #333; }
 .action-btn.fav { background: linear-gradient(135deg, #f6d365 0%, #fda085 100%); color: #fff; text-shadow: 0 1px 2px rgba(0,0,0,0.2); }
+.action-btn.export { background: linear-gradient(135deg, #84fab0 0%, #8fd3f4 100%); color: #333; }
 
 .picto-container {
     display: flex;
@@ -645,4 +646,54 @@ textarea:focus {
     .picto-label { font-size: 1rem; }
     .settings-grid { grid-template-columns: 1fr; }
     .tutorial-step { flex-direction: column; text-align: center; }
+}
+
+/* --- Print Styles (Export to PDF) --- */
+@media print {
+    body {
+        background-color: white !important;
+        color: black !important;
+    }
+
+    header, nav, .input-area, .controls, .builder-controls, .mini-library, .empty-state, .remove-btn, .favorites-area, .custom-form, .help-content, .settings-panel, .library-controls {
+        display: none !important;
+    }
+
+    main {
+        padding: 0;
+        margin: 0;
+    }
+
+    .tab-content {
+        display: none !important;
+    }
+
+    .tab-content.active {
+        display: block !important;
+    }
+
+    .picto-container, .builder-board {
+        border: none !important;
+        box-shadow: none !important;
+        padding: 0 !important;
+        margin: 0 !important;
+        background: white !important;
+        display: flex !important;
+        flex-wrap: wrap !important;
+        gap: 10px !important;
+    }
+
+    .pictogram {
+        break-inside: avoid;
+        border: 2px solid #000 !important;
+        box-shadow: none !important;
+        width: 150px !important;
+        height: 190px !important;
+        transform: none !important;
+    }
+
+    * {
+        -webkit-print-color-adjust: exact !important;
+        print-color-adjust: exact !important;
+    }
 }

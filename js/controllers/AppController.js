@@ -213,4 +213,146 @@ class AppController {
         this.updateCustomGrid();
         this.updateLibrary();
     }
+
+    handlePrint() {
+        window.print();
+    }
+
+    handleExportImage(containerId, filenameBase) {
+        const container = document.getElementById(containerId);
+        if (!container) return;
+
+        const pictograms = container.querySelectorAll('.pictogram');
+        if (pictograms.length === 0) {
+            alert('No hay pictogramas para exportar.');
+            return;
+        }
+
+        // Configuración del canvas
+        const columns = Math.ceil(Math.sqrt(pictograms.length));
+        const rows = Math.ceil(pictograms.length / columns);
+        const padding = 20;
+        const pictoWidth = 180;
+        const pictoHeight = 220;
+        const gap = 15;
+
+        const canvas = document.createElement('canvas');
+        const ctx = canvas.getContext('2d');
+
+        canvas.width = (columns * pictoWidth) + ((columns - 1) * gap) + (padding * 2);
+        canvas.height = (rows * pictoHeight) + ((rows - 1) * gap) + (padding * 2);
+
+        // Fondo blanco
+        ctx.fillStyle = '#ffffff';
+        ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+        let loadedImages = 0;
+        let totalImagesToLoad = 0;
+
+        const drawPictogram = (pictoElement, col, row, onComplete) => {
+            const x = padding + (col * (pictoWidth + gap));
+            const y = padding + (row * (pictoHeight + gap));
+
+            // Draw background and border
+            ctx.fillStyle = '#ffffff';
+            ctx.fillRect(x, y, pictoWidth, pictoHeight);
+
+            const borderColor = window.getComputedStyle(pictoElement).borderColor;
+            ctx.strokeStyle = borderColor;
+            ctx.lineWidth = 4;
+            // Draw rounded rect manually or just rect for simplicity
+            ctx.beginPath();
+            ctx.roundRect(x, y, pictoWidth, pictoHeight, 20);
+            ctx.stroke();
+
+            // Draw Label
+            const labelEl = pictoElement.querySelector('.picto-label');
+            if (labelEl) {
+                ctx.fillStyle = '#000000';
+                ctx.font = 'bold 18px Nunito, Arial';
+                ctx.textAlign = 'center';
+                // Simple word wrap simulation (just first line for now)
+                ctx.fillText(labelEl.textContent.substring(0, 15), x + (pictoWidth/2), y + pictoHeight - 15);
+
+                // Draw top line for label
+                ctx.beginPath();
+                ctx.moveTo(x + 10, y + pictoHeight - 40);
+                ctx.lineTo(x + pictoWidth - 10, y + pictoHeight - 40);
+                ctx.strokeStyle = '#eeeeee';
+                ctx.lineWidth = 2;
+                ctx.stroke();
+            }
+
+            // Draw Image/Emoji
+            const imgContainer = pictoElement.querySelector('.picto-img');
+            if (imgContainer) {
+                const imgEl = imgContainer.querySelector('img');
+                const svgEl = imgContainer.querySelector('svg');
+
+                if (imgEl && imgEl.src) {
+                    const imgObj = new Image();
+                    imgObj.crossOrigin = 'anonymous';
+                    imgObj.onload = () => {
+                        // Keep aspect ratio
+                        const size = 110;
+                        const imgRatio = imgObj.width / imgObj.height;
+                        let drawW = size, drawH = size;
+                        if(imgRatio > 1) { drawH = size / imgRatio; }
+                        else { drawW = size * imgRatio; }
+
+                        ctx.drawImage(imgObj, x + (pictoWidth - drawW)/2, y + 20 + (size - drawH)/2, drawW, drawH);
+                        onComplete();
+                    };
+                    imgObj.onerror = onComplete;
+                    imgObj.src = imgEl.src;
+                } else if (svgEl) {
+                    // Try to render inline SVG
+                    const svgData = new XMLSerializer().serializeToString(svgEl);
+                    const imgObj = new Image();
+                    imgObj.onload = () => {
+                        ctx.drawImage(imgObj, x + 35, y + 20, 110, 110);
+                        onComplete();
+                    };
+                    imgObj.onerror = onComplete;
+                    imgObj.src = 'data:image/svg+xml;base64,' + btoa(unescape(encodeURIComponent(svgData)));
+                } else {
+                    // It's an emoji text
+                    const emoji = imgContainer.textContent.trim();
+                    if (emoji && emoji !== '❌' && emoji !== '⏳') {
+                        ctx.font = '80px Arial';
+                        ctx.textAlign = 'center';
+                        ctx.textBaseline = 'middle';
+                        ctx.fillText(emoji, x + (pictoWidth/2), y + 75);
+                    }
+                    onComplete();
+                }
+            } else {
+                onComplete();
+            }
+        };
+
+        const trySave = () => {
+            loadedImages++;
+            if (loadedImages >= totalImagesToLoad) {
+                const link = document.createElement('a');
+                link.download = `${filenameBase}_${new Date().getTime()}.png`;
+                link.href = canvas.toDataURL('image/png');
+                link.click();
+            }
+        };
+
+        // Count images
+        totalImagesToLoad = pictograms.length;
+
+        let col = 0;
+        let row = 0;
+        pictograms.forEach((picto) => {
+            drawPictogram(picto, col, row, trySave);
+            col++;
+            if (col >= columns) {
+                col = 0;
+                row++;
+            }
+        });
+    }
 }

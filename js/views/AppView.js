@@ -54,6 +54,14 @@ class AppView {
             document.getElementById('save-fav-btn').addEventListener('click', () => {
                 controller.handleSaveFavorite(textInput.value.trim());
             });
+
+            document.getElementById('export-img-btn').addEventListener('click', () => {
+                controller.handleExportImage('picto-output', 'mis_pictogramas');
+            });
+
+            document.getElementById('print-pdf-btn').addEventListener('click', () => {
+                controller.handlePrint();
+            });
         }
 
         // Library
@@ -124,6 +132,20 @@ class AppView {
             });
         }
 
+        const builderExportImgBtn = document.getElementById('builder-export-img-btn');
+        if(builderExportImgBtn) {
+            builderExportImgBtn.addEventListener('click', () => {
+                controller.handleExportImage('builder-board', 'tablero_pictogramas');
+            });
+        }
+
+        const builderPrintBtn = document.getElementById('builder-print-pdf-btn');
+        if(builderPrintBtn) {
+            builderPrintBtn.addEventListener('click', () => {
+                controller.handlePrint();
+            });
+        }
+
         // Drag & Drop event bindings
         this.bindDragEvents();
     }
@@ -156,6 +178,7 @@ class AppView {
                 const newEl = tempDiv.firstChild;
 
                 newEl.id = "picto-" + Date.now() + Math.random().toString(36).substr(2, 9);
+                newEl.ondragstart = window.drag; // Fix dropped elements losing drag events
 
                 const removeBtn = newEl.querySelector('.remove-btn');
                 if(removeBtn) {

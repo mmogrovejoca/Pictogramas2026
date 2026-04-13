@@ -68,14 +68,22 @@ class AppView {
         const librarySearch = document.getElementById('library-search');
         if(librarySearch) {
             librarySearch.addEventListener('input', (e) => {
-                controller.handleLibraryFilter(e.target.value.toLowerCase(), this.getCurrentFilter());
+                controller.handleLibraryFilter(e.target.value.toLowerCase(), this.getCurrentFilter().category, this.getCurrentFilter().source);
             });
 
-            document.querySelectorAll('.filter-btn').forEach(btn => {
+            document.querySelectorAll('.filter-btn:not(.source-btn)').forEach(btn => {
                 btn.addEventListener('click', (e) => {
-                    document.querySelectorAll('.filter-btn').forEach(b => b.classList.remove('active'));
+                    document.querySelectorAll('.filter-btn:not(.source-btn)').forEach(b => b.classList.remove('active'));
                     e.target.classList.add('active');
-                    controller.handleLibraryFilter(librarySearch.value.toLowerCase(), e.target.dataset.filter);
+                    controller.handleLibraryFilter(librarySearch.value.toLowerCase(), e.target.dataset.filter, this.getCurrentFilter().source);
+                });
+            });
+
+            document.querySelectorAll('.source-btn').forEach(btn => {
+                btn.addEventListener('click', (e) => {
+                    document.querySelectorAll('.source-btn').forEach(b => b.classList.remove('active'));
+                    e.target.classList.add('active');
+                    controller.handleLibraryFilter(librarySearch.value.toLowerCase(), this.getCurrentFilter().category, e.target.dataset.source);
                 });
             });
         }
@@ -199,8 +207,12 @@ class AppView {
     }
 
     getCurrentFilter() {
-        const activeBtn = document.querySelector('.filter-btn.active');
-        return activeBtn ? activeBtn.dataset.filter : 'all';
+        const activeCat = document.querySelector('.filter-btn.active:not(.source-btn)');
+        const activeSource = document.querySelector('.source-btn.active');
+        return {
+            category: activeCat ? activeCat.dataset.filter : 'all',
+            source: activeSource ? activeSource.dataset.source : 'all'
+        };
     }
 
     switchTab(tabId, btnElement) {
@@ -339,7 +351,7 @@ class AppView {
         removeBtn.addEventListener('click', function() { this.parentElement.remove(); });
     }
 
-    renderLibrary(dict, searchTerm = "", filter = "all") {
+    renderLibrary(dict, searchTerm = "", filter = "all", sourceFilter = "all") {
         const grid = document.getElementById('library-grid');
         const miniGrid = document.getElementById('builder-library');
 
@@ -351,7 +363,14 @@ class AppView {
         const filteredDict = dict.filter(entry => {
             const matchSearch = entry.palabras.some(p => p.toLowerCase().includes(searchTerm));
             const matchFilter = filter === 'all' || entry.cat === filter;
-            return matchSearch && matchFilter;
+
+            let matchSource = true;
+            if (sourceFilter !== 'all') {
+                const entrySource = entry.source || 'Personalizado';
+                matchSource = entrySource === sourceFilter;
+            }
+
+            return matchSearch && matchFilter && matchSource;
         });
 
         if (filteredDict.length === 0) {

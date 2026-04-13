@@ -48,30 +48,54 @@ class AppController {
 
         this.view.clearGenerator();
 
-        const wordsRaw = text.split(/\s+/);
-        const wordsToProcess = [];
+        const wordsRaw = text.split(/\s+/).map(w => w.replace(/[.,?!¡¿]/g, ""));
+        const tokensToProcess = [];
 
-        wordsRaw.forEach(w => {
-            const cleanW = this.dictModel.normalizeString(w);
-            if (cleanW && (!this.dictModel.stopWords.includes(cleanW) || this.dictModel.findPictogram(cleanW))) {
-                wordsToProcess.push(w);
+        let i = 0;
+        // Ventana deslizante para encontrar frases (n-gramas) hasta de 4 palabras
+        while (i < wordsRaw.length) {
+            let foundMatch = false;
+
+            // Intentar coincidencias de 4, 3, 2 y 1 palabra
+            for (let windowSize = 4; windowSize > 0; windowSize--) {
+                if (i + windowSize <= wordsRaw.length) {
+                    const phrase = wordsRaw.slice(i, i + windowSize).join(" ");
+                    const cleanPhrase = this.dictModel.normalizeString(phrase);
+
+                    const pictoData = this.dictModel.findPictogram(cleanPhrase);
+
+                    if (pictoData) {
+                        tokensToProcess.push({ word: phrase, data: pictoData });
+                        i += windowSize;
+                        foundMatch = true;
+                        break;
+                    }
+                }
             }
-        });
 
-        if (wordsToProcess.length === 0) {
+            if (!foundMatch) {
+                // Si no hay coincidencia y no es stop word, agregarlo como desconocido para IA
+                const singleWord = wordsRaw[i];
+                const cleanW = this.dictModel.normalizeString(singleWord);
+                if (cleanW && !this.dictModel.stopWords.includes(cleanW)) {
+                    tokensToProcess.push({ word: singleWord, data: null });
+                }
+                i++;
+            }
+        }
+
+        if (tokensToProcess.length === 0) {
             this.view.renderGeneratorNotFound();
             return;
         }
 
-        wordsToProcess.forEach(word => {
-            const cleanWord = word.replace(/[.,?!¡¿]/g, "");
-            const pictoData = this.dictModel.findPictogram(cleanWord);
-
-            if (pictoData) {
-                const el = this.view.createPictogramElement(pictoData, cleanWord);
+        tokensToProcess.forEach(token => {
+            if (token.data) {
+                const el = this.view.createPictogramElement(token.data, token.word);
                 this.view.appendPictogramToGenerator(el);
             } else {
-                const unknownData = { img: "❓", cat: "otros", palabras: [cleanWord] };
+                const cleanWord = token.word;
+                const unknownData = { img: "❓", cat: "otros", palabras: [cleanWord], source: "Desconocido" };
                 const el = this.view.createPictogramElement(unknownData, cleanWord);
 
                 if (this.stateModel.settings.apiKey && this.stateModel.settings.autoAI) {
@@ -146,12 +170,13 @@ class AppController {
         this.updateFavorites();
     }
 
-    handleLibraryFilter(searchTerm, filter) {
-        this.view.renderLibrary(this.dictModel.getFullDict(), searchTerm, filter);
+    handleLibraryFilter(searchTerm, filter, source) {
+        this.view.renderLibrary(this.dictModel.getFullDict(), searchTerm, filter, source);
     }
 
     updateLibrary() {
-        this.view.renderLibrary(this.dictModel.getFullDict(), "", this.view.getCurrentFilter());
+        const filters = this.view.getCurrentFilter();
+        this.view.renderLibrary(this.dictModel.getFullDict(), "", filters.category, filters.source);
     }
 
     updateCustomGrid() {
